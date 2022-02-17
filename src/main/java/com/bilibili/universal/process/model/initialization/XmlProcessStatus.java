@@ -38,6 +38,9 @@ public class XmlProcessStatus implements Serializable, Comparable<XmlProcessStat
     /** indicate whether a status is normally completed. */
     private int               ac               = 0;
 
+    /** indicate whether status is default destination. */
+    private boolean           defaultDst       = false;
+
     /**
      * Constructor for reflect.
      */
@@ -53,14 +56,17 @@ public class XmlProcessStatus implements Serializable, Comparable<XmlProcessStat
      * @param desc
      * @param ps
      * @param ac
+     * @param defaultDst
      */
-    public XmlProcessStatus(int no, int sequence, String name, String desc, int ps, int ac) {
+    public XmlProcessStatus(int no, int sequence, String name, String desc, int ps, int ac,
+                            boolean defaultDst) {
         this.no = no;
         this.sequence = sequence;
         this.name = name;
         this.desc = desc;
         this.ps = ps;
         this.ac = ac;
+        this.defaultDst = defaultDst;
     }
 
     public int getNo() {
@@ -109,6 +115,14 @@ public class XmlProcessStatus implements Serializable, Comparable<XmlProcessStat
 
     public void setAc(int ac) {
         this.ac = ac;
+    }
+
+    public boolean isDefaultDst() {
+        return defaultDst;
+    }
+
+    public void setDefaultDst(boolean defaultDst) {
+        this.defaultDst = defaultDst;
     }
 
     @Override

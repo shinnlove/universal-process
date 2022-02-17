@@ -99,6 +99,11 @@ public class XmlTemplateParser {
         int ac = acTag == null ? 0 : Integer.parseInt(acTag);
         xs.setAc(ac);
 
+        // parse default dst
+        String defaultDst = attr.get(ATTR_DEFAULT);
+        boolean dd = defaultDst == null ? false : Boolean.parseBoolean(defaultDst);
+        xs.setDefaultDst(dd);
+
         return xs;
     }
 

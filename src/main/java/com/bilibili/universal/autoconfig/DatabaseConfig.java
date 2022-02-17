@@ -11,6 +11,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,6 +43,7 @@ public class DatabaseConfig implements EnvironmentAware {
     private Environment         environment;
 
     @Bean("sqlSessionFactory")
+    @ConditionalOnMissingBean(SqlSessionFactory.class)
     public SqlSessionFactory sqlSessionFactory(@Qualifier("dataSource") DataSource dataSource) throws Exception {
         SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
         bean.setDataSource(dataSource);
@@ -63,17 +65,18 @@ public class DatabaseConfig implements EnvironmentAware {
     }
 
     @Bean("sqlSessionTemplate")
+    @ConditionalOnMissingBean(SqlSessionTemplate.class)
     public SqlSessionTemplate sqlSessionTemplate(@Qualifier("sqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
         return new SqlSessionTemplate(sqlSessionFactory);
     }
 
-    @Bean(name = "transactionManager")
+    @Bean(name = "processTxManager")
     public DataSourceTransactionManager missionTransactionManager(@Qualifier("dataSource") DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
     }
 
     @Bean(name = "transactionTemplate")
-    public TransactionTemplate missionTransactionTemplate(@Qualifier("transactionManager") DataSourceTransactionManager dataSourceTransactionManager) {
+    public TransactionTemplate missionTransactionTemplate(@Qualifier("processTxManager") DataSourceTransactionManager dataSourceTransactionManager) {
         return new TransactionTemplate(dataSourceTransactionManager);
     }
 

@@ -28,6 +28,9 @@ public class StatusCache implements Serializable, Comparable<StatusCache> {
     /** indicate whether status is normal accomplished */
     private int               accomplish       = 0;
 
+    /** indicate whether status is initialize default status */
+    private boolean           defaultDst       = false;
+
     /**
      * Constructor for reflect.
      */
@@ -40,11 +43,13 @@ public class StatusCache implements Serializable, Comparable<StatusCache> {
      * @param no 
      * @param sequence
      * @param accomplish
+     * @param defaultDst
      */
-    public StatusCache(int no, int sequence, int accomplish) {
+    public StatusCache(int no, int sequence, int accomplish, boolean defaultDst) {
         this.no = no;
         this.sequence = sequence;
         this.accomplish = accomplish;
+        this.defaultDst = defaultDst;
     }
 
     public int getNo() {
@@ -69,6 +74,14 @@ public class StatusCache implements Serializable, Comparable<StatusCache> {
 
     public void setAccomplish(int accomplish) {
         this.accomplish = accomplish;
+    }
+
+    public boolean isDefaultDst() {
+        return defaultDst;
+    }
+
+    public void setDefaultDst(boolean defaultDst) {
+        this.defaultDst = defaultDst;
     }
 
     @Override

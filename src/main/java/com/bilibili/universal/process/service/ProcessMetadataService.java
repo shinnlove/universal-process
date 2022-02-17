@@ -27,6 +27,8 @@ public interface ProcessMetadataService {
      */
     TemplateCache getTemplateByActionId(int actionId);
 
+    int getDstByTemplateId(int templateId);
+
     /**
      * Get specific handlers by action id.
      * 

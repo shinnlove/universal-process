@@ -14,34 +14,34 @@ import com.bilibili.universal.util.enums.BaseEnum;
  */
 public enum SystemResultCode implements BaseEnum {
 
-                                                  /** ---------------------- 公用类:0×× ---------------------- */
+    /** ---------------------- 公用类:0×× ---------------------- */
 
-                                                  /** 成功 */
-                                                  SUCCESS("0", "成功"),
+    /** 成功 */
+    SUCCESS("0", "成功"),
 
-                                                  /** 系统异常 */
-                                                  SYSTEM_ERROR("10001", "系统异常"),
+    /** 系统异常 */
+    SYSTEM_ERROR("10001", "系统异常"),
 
-                                                  /** 完成 */
-                                                  FINISHED("10002", "完成"),
+    /** 完成 */
+    FINISHED("10002", "完成"),
 
-                                                  /** 无效的参数 */
-                                                  ILLEGAL_ARGUMENT("10003", "无效的参数"),
+    /** 无效的参数 */
+    ILLEGAL_ARGUMENT("10003", "无效的参数"),
 
-                                                  /** 参数异常 */
-                                                  PARAM_INVALID("10004", "参数异常"),
+    /** 参数异常 */
+    PARAM_INVALID("10004", "参数异常"),
 
-                                                  /** 服务调用出错 */
-                                                  SERVICE_INVOKE_ERROR("10005", "服务调用出错。"),
+    /** 服务调用出错 */
+    SERVICE_INVOKE_ERROR("10005", "服务调用出错。"),
 
-                                                  /** 数据访问出错 */
-                                                  DB_ACCESS_ERROR("10006", "数据访问出错"),
+    /** 数据访问出错 */
+    DB_ACCESS_ERROR("10006", "数据访问出错"),
 
-                                                  /** 数据库SQL查询出错 */
-                                                  DB_QUERY_ERROR("10007", "数据库SQL查询出错"),
+    /** 数据库SQL查询出错 */
+    DB_QUERY_ERROR("10007", "数据库SQL查询出错"),
 
-                                                  /** 数据SQL执行出错 */
-                                                  DB_EXECUTE_ERROR("10008", "数据SQL执行出错"),
+    /** 数据SQL执行出错 */
+    DB_EXECUTE_ERROR("10008", "数据SQL执行出错"),
 
     ;
 

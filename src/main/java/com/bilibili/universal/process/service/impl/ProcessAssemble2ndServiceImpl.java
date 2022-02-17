@@ -147,7 +147,8 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
         // step2: status check array
         List<StatusCache> statusCache = new ArrayList<>();
         for (XmlProcessStatus s : xp.getStatus()) {
-            statusCache.add(new StatusCache(s.getNo(), s.getSequence(), s.getAc()));
+            statusCache
+                .add(new StatusCache(s.getNo(), s.getSequence(), s.getAc(), s.isDefaultDst()));
         }
 
         if (CollectionUtils.isEmpty(statusCache)) {
@@ -275,6 +276,27 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
     @Override
     public TemplateCache getTemplateByActionId(int actionId) {
         return actionIdCache.get(actionId);
+    }
+
+    @Override
+    public int getDstByTemplateId(int templateId) {
+        TemplateCache cache = getTemplateById(templateId);
+        StatusCache[] status = cache.getStatusArray();
+        int size = status.length;
+        for (int i = 0; i < size; i++) {
+            if (status[i].isDefaultDst()) {
+                return status[i].getNo();
+            }
+        }
+
+        // random use one 
+        Map<Integer, List<ActionHandler>> inits = cache.getInitializers();
+        for (Map.Entry<Integer, List<ActionHandler>> entry : inits.entrySet()) {
+            return entry.getKey();
+        }
+
+        // no inits
+        return -1;
     }
 
     private List<ActionHandler> getInitializer(int templateId, int destination) {

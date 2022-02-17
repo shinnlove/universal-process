@@ -12,9 +12,9 @@ public enum TemplateTriggerType {
 
     ACCEPT(1, "流程完成"),
 
-    REJECT(2, "悬赏任务参与用户"),
+    REJECT(2, "流程拒绝"),
 
-    CANCEL(3, "悬赏任务参与用户"),
+    CANCEL(3, "流程取消"),
 
     ;
 

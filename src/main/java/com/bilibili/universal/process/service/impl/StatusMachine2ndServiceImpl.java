@@ -25,7 +25,6 @@ import com.bilibili.universal.process.consts.MachineConstant;
 import com.bilibili.universal.process.core.ProcessBlockingCoreService;
 import com.bilibili.universal.process.core.ProcessStatusCoreService;
 import com.bilibili.universal.process.core.UniversalProcessCoreService;
-import com.bilibili.universal.process.enums.TemplateType;
 import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.blocking.ProcessBlocking;
 import com.bilibili.universal.process.model.cache.ActionCache;
@@ -98,7 +97,7 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
     @Override
     public long initProcess(int templateId, long refUniqueNo, DataContext dataContext,
                             ProcessCallback callback) {
-        int dst = TemplateType.getDstByTemplateId(templateId);
+        int dst = processMetadataService.getDstByTemplateId(templateId);
         return initProcess(templateId, dst, refUniqueNo, dataContext, callback);
     }
 
