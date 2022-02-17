@@ -1,4 +1,4 @@
-package com.bilibili.process;
+package com.bilibili.universal;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
