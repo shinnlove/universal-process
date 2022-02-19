@@ -23,6 +23,8 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.bilibili.universal.util.log.LoggerUtil;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import javax.sql.DataSource;
 
@@ -42,9 +44,24 @@ public class DatabaseConfig implements EnvironmentAware {
 
     private Environment         environment;
 
+    @Bean("primaryDataSource")
+    @ConditionalOnMissingBean(name = "primaryDataSource")
+    public DataSource dataSource() throws Exception {
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setPoolName("HikariCP Connection Pool");
+        hikariConfig.setDataSourceClassName("com.mysql.cj.jdbc.Driver");
+        hikariConfig.addDataSourceProperty("user", "root");
+        hikariConfig.addDataSourceProperty("password", "");
+        hikariConfig.addDataSourceProperty("url",
+            "jdbc:mysql://127.0.0.1:3306/miffy?useUnicode=true&characterEncoding=UTF-8&tinyInt1isBit=false&allowMultiQueries=true&zeroDateTimeBehavior=convertToNull");
+        hikariConfig.setMaximumPoolSize(15);
+
+        return new HikariDataSource(hikariConfig);
+    }
+
     @Bean("sqlSessionFactory")
     @ConditionalOnMissingBean(name = "sqlSessionFactory")
-    public SqlSessionFactory sqlSessionFactory(@Qualifier("adReadDataSource") DataSource dataSource) throws Exception {
+    public SqlSessionFactory sqlSessionFactory(@Qualifier("primaryDataSource") DataSource dataSource) throws Exception {
         SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
         bean.setDataSource(dataSource);
         try {
@@ -72,7 +89,7 @@ public class DatabaseConfig implements EnvironmentAware {
 
     @Bean(name = "transactionManager")
     @ConditionalOnMissingBean(name = "transactionManager")
-    public DataSourceTransactionManager transactionManager(@Qualifier("adReadDataSource") DataSource dataSource) {
+    public DataSourceTransactionManager transactionManager(@Qualifier("primaryDataSource") DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
     }
 
