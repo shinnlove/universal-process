@@ -7,9 +7,9 @@
         <plugin type="org.mybatis.generator.plugins.EqualsHashCodePlugin"></plugin>
         <plugin type="org.mybatis.generator.plugins.SerializablePlugin"></plugin>
         <plugin type="org.mybatis.generator.plugins.ToStringPlugin"></plugin>
-        <plugin type="com.shinnlove.springbootall.util.plugin.MySQLLimitPlugin"></plugin>
+        <plugin type="com.bilibili.universal.util.plugin.MySQLLimitPlugin"></plugin>
         <!--        <plugin type="com.bilibili.bjcom.mbg.plugin.MysqlInsertUpdatePlugin"></plugin>-->
-        <commentGenerator type="com.shinnlove.springbootall.util.plugin.DbRemarksCommentGenerator">
+        <commentGenerator type="com.bilibili.universal.util.plugin.DbRemarksCommentGenerator">
             <!-- 这个元素用来去除指定生成的注释中是否包含生成的日期 false:表示保护 -->
             <!-- 如果生成日期，会造成即使修改一个字段，整个实体类所有属性都会发生变化，不利于版本控制，所以设置为true -->
             <property name="suppressDate" value="true"/>
@@ -21,13 +21,13 @@
                         connectionURL="jdbc:mysql://127.0.0.1:3306/miffy?useUnicode=true&amp;characterEncoding=UTF-8&amp;tinyInt1isBit=false&amp;allowMultiQueries=true&amp;zeroDateTimeBehavior=convertToNull"
                         userId="root" password="">
         </jdbcConnection>
-        <javaTypeResolver type="com.shinnlove.springbootall.util.plugin.JavaTypeResolver">
+        <javaTypeResolver type="com.bilibili.universal.util.plugin.JavaTypeResolver">
             <!-- This property is used to specify whether MyBatis Generator should
                 force the use of java.math.BigDecimal for DECIMAL and NUMERIC fields, -->
             <property name="forceBigDecimals" value="false"/>
         </javaTypeResolver>
         <!-- 生成模型的包名和位置 -->
-        <javaModelGenerator targetPackage="com.shinnlove.springbootall.dao.model"
+        <javaModelGenerator targetPackage="com.bilibili.universal.dao.model"
                             targetProject="src/main/java">
             <property name="enableSubPackages" value="true"/>
             <property name="trimStrings" value="true"/>
@@ -38,7 +38,7 @@
             <property name="enableSubPackages" value="true"/>
         </sqlMapGenerator>
         <!-- 生成DAO的包名和位置 -->
-        <javaClientGenerator type="XMLMAPPER" targetPackage="com.shinnlove.springbootall.dao"
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.bilibili.universal.dao"
                              targetProject="src/main/java">
             <property name="enableSubPackages" value="true"/>
         </javaClientGenerator>

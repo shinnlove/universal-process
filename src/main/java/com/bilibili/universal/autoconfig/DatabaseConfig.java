@@ -36,15 +36,15 @@ public class DatabaseConfig implements EnvironmentAware {
 
     private static final Logger logger     = LoggerFactory.getLogger(DatabaseConfig.class);
 
-    private static final String MAPPER     = "classpath:META-INF/mapper/*.xml";
+    private static final String MAPPER     = "classpath*:META-INF/mapper/*.xml";
 
-    private static final String EXT_MAPPER = "classpath:META-INF/mapper/ext/*.xml";
+    private static final String EXT_MAPPER = "classpath*:META-INF/mapper/ext/*.xml";
 
     private Environment         environment;
 
     @Bean("sqlSessionFactory")
-    @ConditionalOnMissingBean(SqlSessionFactory.class)
-    public SqlSessionFactory sqlSessionFactory(@Qualifier("dataSource") DataSource dataSource) throws Exception {
+    @ConditionalOnMissingBean(name = "sqlSessionFactory")
+    public SqlSessionFactory sqlSessionFactory(@Qualifier("adReadDataSource") DataSource dataSource) throws Exception {
         SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
         bean.setDataSource(dataSource);
         try {
@@ -65,18 +65,19 @@ public class DatabaseConfig implements EnvironmentAware {
     }
 
     @Bean("sqlSessionTemplate")
-    @ConditionalOnMissingBean(SqlSessionTemplate.class)
+    @ConditionalOnMissingBean(name = "sqlSessionTemplate")
     public SqlSessionTemplate sqlSessionTemplate(@Qualifier("sqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
         return new SqlSessionTemplate(sqlSessionFactory);
     }
 
-    @Bean(name = "processTxManager")
-    public DataSourceTransactionManager missionTransactionManager(@Qualifier("dataSource") DataSource dataSource) {
+    @Bean(name = "transactionManager")
+    @ConditionalOnMissingBean(name = "transactionManager")
+    public DataSourceTransactionManager transactionManager(@Qualifier("adReadDataSource") DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
     }
 
     @Bean(name = "transactionTemplate")
-    public TransactionTemplate missionTransactionTemplate(@Qualifier("processTxManager") DataSourceTransactionManager dataSourceTransactionManager) {
+    public TransactionTemplate transactionTemplate(@Qualifier("transactionManager") DataSourceTransactionManager dataSourceTransactionManager) {
         return new TransactionTemplate(dataSourceTransactionManager);
     }
 
