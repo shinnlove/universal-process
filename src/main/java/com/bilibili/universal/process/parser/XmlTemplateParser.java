@@ -301,7 +301,10 @@ public class XmlTemplateParser {
         xp.setId(Integer.parseInt(attr.get(ATTR_ID)));
         xp.setName(attr.get(ATTR_NAME));
         xp.setDesc(attr.get(ATTR_DESC));
-        xp.setParent(Integer.parseInt(attr.get(ATTR_PARENT)));
+
+        // parentId
+        int parentId = attr.get(ATTR_PARENT) == null ? -1 : Integer.parseInt(attr.get(ATTR_PARENT));
+        xp.setParent(parentId);
 
         // reconcile 0 represents no reconcile
         int reconcile = attr.get(ATTR_RECONCILE) == null ? 0
