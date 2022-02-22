@@ -4,8 +4,10 @@
  */
 package com.bilibili.universal.process.service;
 
-import com.bilibili.universal.process.callback.ProcessCallback;
+import java.util.function.Consumer;
+
 import com.bilibili.universal.process.model.context.DataContext;
+import com.bilibili.universal.process.model.context.ProcessContext;
 
 /**
  * @author Tony Zhao
@@ -13,15 +15,43 @@ import com.bilibili.universal.process.model.context.DataContext;
  */
 public interface StatusMachineInitService {
 
+    /**
+     * @param templateId 
+     * @param refUniqueNo
+     * @param dataContext
+     * @return
+     */
     long initProcess(final int templateId, final long refUniqueNo, final DataContext dataContext);
 
+    /**
+     * @param templateId 
+     * @param refUniqueNo
+     * @param dataContext
+     * @param callback
+     * @return
+     */
     long initProcess(final int templateId, final long refUniqueNo, final DataContext dataContext,
-                     final ProcessCallback callback);
+                     final Consumer<ProcessContext> callback);
 
+    /**
+     * @param templateId 
+     * @param destination
+     * @param refUniqueNo
+     * @param dataContext
+     * @return
+     */
     long initProcess(final int templateId, final int destination, final long refUniqueNo,
                      final DataContext dataContext);
 
+    /**
+     * @param templateId 
+     * @param destination
+     * @param refUniqueNo
+     * @param dataContext
+     * @param callback
+     * @return
+     */
     long initProcess(final int templateId, final int destination, final long refUniqueNo,
-                     final DataContext dataContext, final ProcessCallback callback);
+                     final DataContext dataContext, final Consumer<ProcessContext> callback);
 
 }

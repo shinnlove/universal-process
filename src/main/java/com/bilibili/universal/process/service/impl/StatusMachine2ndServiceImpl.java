@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -21,7 +22,6 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.CollectionUtils;
 
-import com.bilibili.universal.process.callback.ProcessCallback;
 import com.bilibili.universal.process.consts.MachineConstant;
 import com.bilibili.universal.process.core.ProcessBlockingCoreService;
 import com.bilibili.universal.process.core.ProcessStatusCoreService;
@@ -34,14 +34,13 @@ import com.bilibili.universal.process.model.blocking.ProcessBlocking;
 import com.bilibili.universal.process.model.cache.ActionCache;
 import com.bilibili.universal.process.model.cache.TemplateCache;
 import com.bilibili.universal.process.model.cache.TemplateMetadata;
-import com.bilibili.universal.process.model.cascade.PrepareParent;
 import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
 import com.bilibili.universal.process.no.SnowflakeIdWorker;
 import com.bilibili.universal.process.service.ActionExecutor;
 import com.bilibili.universal.process.service.ProcessMetadataService;
-import com.bilibili.universal.process.service.StatusMachine2ndService;
+import com.bilibili.universal.process.util.TplUtil;
 import com.bilibili.universal.util.code.SystemResultCode;
 import com.bilibili.universal.util.common.AssertUtil;
 import com.bilibili.universal.util.exception.SystemException;
@@ -54,7 +53,7 @@ import javax.annotation.Resource;
  * @version $Id: StatusMachine2ndServiceImpl.java, v 0.1 2022-02-09 5:50 PM Tony Zhao Exp $$
  */
 @Service
-public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
+public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
 
     private static final Logger         logger = LoggerFactory
         .getLogger(StatusMachine2ndServiceImpl.class);
@@ -100,7 +99,7 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
 
     @Override
     public long initProcess(int templateId, long refUniqueNo, DataContext dataContext,
-                            ProcessCallback callback) {
+                            Consumer<ProcessContext> callback) {
         int dst = processMetadataService.getDstByTemplateId(templateId);
         return initProcess(templateId, dst, refUniqueNo, dataContext, callback);
     }
@@ -114,7 +113,7 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
 
     @Override
     public long initProcess(int templateId, int destination, long refUniqueNo,
-                            DataContext dataContext, ProcessCallback callback) {
+                            DataContext dataContext, Consumer<ProcessContext> callback) {
         AssertUtil.largeThanValue(refUniqueNo, 0);
         final int source = -1;
 
@@ -152,7 +151,7 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
 
             // Warning: give callback a chance to execute outta business codes, callback must after execute!
             if (callback != null) {
-                callback.doCallback(context);
+                callback.accept(context);
             }
 
             return newProcessId;
@@ -171,7 +170,7 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
 
     @Override
     public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext,
-                                         ProcessCallback callback) {
+                                         Consumer<ProcessContext> callback) {
 
         TemplateCache template = processMetadataService.getTemplateByActionId(actionId);
         AssertUtil.isNotNull(template);
@@ -243,7 +242,7 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
 
             // give a change for business codes to execute outta logic, callback must after execute!
             if (callback != null) {
-                callback.doCallback(context);
+                callback.accept(context);
             }
 
             return 1;
@@ -265,7 +264,8 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
     }
 
     @Override
-    public BatchInitResult batchInitProcess(BatchInitParam param, ProcessCallback callback) {
+    public BatchInitResult batchInitProcess(BatchInitParam param,
+                                            Consumer<ProcessContext> callback) {
         // add some validator here..
 
         int ctId = -1;
@@ -283,8 +283,8 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
         }
 
         TemplateCache cache = processMetadataService.getTemplateById(ctId);
-        TemplateMetadata metadata = cache.getMetadata();
-        int ptId = metadata.getParentId();
+        int ptId = TplUtil.parentId(cache);
+
         DataContext data = param.getParentDataContext();
 
         initProcess(ptId, pRefNo, data);
@@ -300,78 +300,8 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
 
     @Override
     public long proceedParentProcess(int actionId, long refUniqueNo, DataContext dataContext,
-                                     ProcessCallback callback) {
+                                     Consumer<ProcessContext> callback) {
         return 0;
-    }
-
-    private int chooseAction(int parentTemplateId, int source, int destination) {
-        TemplateCache cache = processMetadataService.getTemplateById(parentTemplateId);
-        Map<Integer, Map<Integer, ActionCache>> parentActionDst = cache.getActionTable();
-        if (parentActionDst.containsKey(destination)) {
-            Map<Integer, ActionCache> dstMapping = parentActionDst.get(destination);
-            if (dstMapping.containsKey(source)) {
-                ActionCache dstAction = dstMapping.get(source);
-                // parent revising action id
-                return dstAction.getActionId();
-            }
-        }
-        return -1;
-    }
-
-    private Object chooseParam(ActionCache cache, ProcessContext context, int parentTemplateId) {
-        PrepareParent prepare = getPrepare(cache.getPrepareHandler());
-        if (prepare != null && prepare.getParentTemplateId() == parentTemplateId) {
-            // has prepare parameter
-            return getResultByClass(context, prepare.getClassName());
-        } else {
-            // use default if not exist
-            List<ActionHandler> syncHandlers = cache.getSyncHandlers();
-            int size = syncHandlers.size();
-            ActionHandler h = syncHandlers.get(size - 1);
-            String name = h.getClass().getName();
-            return getResultByClass(context, name);
-        }
-    }
-
-    private Object getResultByClass(ProcessContext context, String className) {
-        Object result = null;
-        Map<String, Object> results = context.getResultObject();
-        if (!CollectionUtils.isEmpty(results) && results.containsKey(className)) {
-            result = results.get(className);
-        }
-        return result;
-    }
-
-    private PrepareParent getPrepare(Map<String, Integer> prepare) {
-        for (Map.Entry<String, Integer> entry : prepare.entrySet()) {
-            String prepareName = entry.getKey();
-            int prepareId = entry.getValue();
-            return new PrepareParent(prepareName, prepareId);
-        }
-        return null;
-    }
-
-    private ProcessContext buildProContext(int templateId, long refUniqueNo, int source,
-                                           int destination, DataContext dataContext) {
-        ProcessContext context = new ProcessContext();
-        context.setTemplateId(templateId);
-        context.setRefUniqueNo(refUniqueNo);
-        context.setSourceStatus(source);
-        context.setDestinationStatus(destination);
-        context.setDataContext(dataContext);
-        return context;
-    }
-
-    private ProcessContext buildProContext(int templateId, int actionId, long refUniqueNo,
-                                           int source, int destination, DataContext dataContext) {
-        ProcessContext context = new ProcessContext();
-        context.setTemplateId(templateId);
-        context.setActionId(actionId);
-        context.setRefUniqueNo(refUniqueNo);
-        context.setSourceStatus(source);
-        context.setDestinationStatus(destination);
-        context.setDataContext(dataContext);
-        return context;
     }
 
     private <R> R tx(final Function<TransactionStatus, R> function) {
@@ -387,13 +317,6 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
             LoggerUtil.error(logger, e, "Handler execution has error occurred, ", e.getMessage());
             // special warn: according to meeting discussion, the whole tx should be interrupted if one handler execute failed.
             throw new SystemException(SystemResultCode.SYSTEM_ERROR, e, e.getMessage());
-        }
-    }
-
-    private void checkSourceStatus(int currentStatus, int source) {
-        if (currentStatus != source) {
-            throw new SystemException(SystemResultCode.PARAM_INVALID,
-                MachineConstant.SOURCE_STATUS_INCORRECT);
         }
     }
 
@@ -418,6 +341,20 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
                 }
             }
         } // if blocking
+    }
+
+    private int chooseAction(int parentTemplateId, int source, int destination) {
+        TemplateCache cache = processMetadataService.getTemplateById(parentTemplateId);
+        Map<Integer, Map<Integer, ActionCache>> parentActionDst = cache.getActionTable();
+        if (parentActionDst.containsKey(destination)) {
+            Map<Integer, ActionCache> dstMapping = parentActionDst.get(destination);
+            if (dstMapping.containsKey(source)) {
+                ActionCache dstAction = dstMapping.get(source);
+                // parent revising action id
+                return dstAction.getActionId();
+            }
+        }
+        return -1;
     }
 
     private void reconcileParent(long selfProcessNo, long parentProcessNo, int needReconcile,

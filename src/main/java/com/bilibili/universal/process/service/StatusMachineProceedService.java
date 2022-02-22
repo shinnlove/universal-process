@@ -4,7 +4,8 @@
  */
 package com.bilibili.universal.process.service;
 
-import com.bilibili.universal.process.callback.ProcessCallback;
+import java.util.function.Consumer;
+
 import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 
@@ -14,10 +15,24 @@ import com.bilibili.universal.process.model.context.ProcessContext;
  */
 public interface StatusMachineProceedService {
 
+    /**
+     * @param actionId 
+     * @param refUniqueNo
+     * @param dataContext
+     * @return
+     */
     ProcessContext proceedProcess(final int actionId, final long refUniqueNo,
                                   final DataContext dataContext);
 
+    /**
+     * @param actionId 
+     * @param refUniqueNo
+     * @param dataContext
+     * @param callback
+     * @return
+     */
     ProcessContext proceedProcess(final int actionId, final long refUniqueNo,
-                                  final DataContext dataContext, final ProcessCallback callback);
+                                  final DataContext dataContext,
+                                  final Consumer<ProcessContext> callback);
 
 }

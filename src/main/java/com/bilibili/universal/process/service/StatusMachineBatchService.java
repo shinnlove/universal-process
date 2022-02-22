@@ -4,10 +4,12 @@
  */
 package com.bilibili.universal.process.service;
 
-import com.bilibili.universal.process.callback.ProcessCallback;
+import java.util.function.Consumer;
+
 import com.bilibili.universal.process.model.batch.BatchInitParam;
 import com.bilibili.universal.process.model.batch.BatchInitResult;
 import com.bilibili.universal.process.model.context.DataContext;
+import com.bilibili.universal.process.model.context.ProcessContext;
 
 /**
  * @author Tony Zhao
@@ -15,14 +17,38 @@ import com.bilibili.universal.process.model.context.DataContext;
  */
 public interface StatusMachineBatchService {
 
+    /**
+     * @param param 
+     * @return
+     */
     BatchInitResult batchInitProcess(final BatchInitParam param);
 
-    BatchInitResult batchInitProcess(final BatchInitParam param, final ProcessCallback callback);
+    /**
+     * @param param 
+     * @param callback
+     * @return
+     */
+    BatchInitResult batchInitProcess(final BatchInitParam param,
+                                     final Consumer<ProcessContext> callback);
 
+    /**
+     * @param actionId 
+     * @param refUniqueNo
+     * @param dataContext
+     * @return
+     */
     long proceedParentProcess(final int actionId, final long refUniqueNo,
                               final DataContext dataContext);
 
+    /**
+     * @param actionId 
+     * @param refUniqueNo
+     * @param dataContext
+     * @param callback
+     * @return
+     */
     long proceedParentProcess(final int actionId, final long refUniqueNo,
-                              final DataContext dataContext, final ProcessCallback callback);
+                              final DataContext dataContext,
+                              final Consumer<ProcessContext> callback);
 
 }
