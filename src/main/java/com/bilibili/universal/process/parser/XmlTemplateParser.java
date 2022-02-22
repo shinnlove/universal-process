@@ -309,7 +309,7 @@ public class XmlTemplateParser {
         // reconcile 0 represents no reconcile
         int reconcile = attr.get(ATTR_RECONCILE) == null ? 0
             : Integer.parseInt(attr.get(ATTR_RECONCILE));
-        xp.setParent(reconcile);
+        xp.setReconcile(reconcile);
 
         // coordinate 1 represents and &&
         int coordinate = attr.get(ATTR_COORDINATE) == null ? 1
