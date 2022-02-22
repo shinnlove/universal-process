@@ -28,6 +28,7 @@ public interface ProcessStatusCoreService {
      * @return
      */
     long createProcessWithStatus(int templateId, int actionId, long processNo, long refUniqueNo,
+                                 long parentRefUniqueNo,
                                  int source, int destination, String operator, String remark);
 
     /**

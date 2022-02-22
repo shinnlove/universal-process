@@ -33,14 +33,14 @@ public class ProcessStatusCoreServiceImpl implements ProcessStatusCoreService {
 
     @Override
     public long createProcessWithStatus(int templateId, int actionId, long processNo,
-                                        long refUniqueNo, int source, int destination,
-                                        String operator, String remark) {
+                                        long refUniqueNo, long parentRefUniqueNo, int source,
+                                        int destination, String operator, String remark) {
         // build model
         UniversalProcess uProcess = new UniversalProcess();
         uProcess.setProcessNo(processNo);
         uProcess.setTemplateId(templateId);
         uProcess.setRefUniqueNo(refUniqueNo);
-        // todo: parent no -1 need to use template info
+        uProcess.setParentProcessNo(parentRefUniqueNo);
         uProcess.setCurrentStatus(destination);
         uProcess.setLatestOperator(operator);
         uProcess.setRemark(remark);

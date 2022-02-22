@@ -105,6 +105,20 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
     }
 
     @Override
+    public long initProcess(int templateId, long refUniqueNo, long parentRefUniqueNo,
+                            DataContext dataContext) {
+        return initProcess(templateId, refUniqueNo, parentRefUniqueNo, dataContext, resp -> {
+        });
+    }
+
+    @Override
+    public long initProcess(int templateId, long refUniqueNo, long parentRefUniqueNo,
+                            DataContext dataContext, Consumer<ProcessContext> callback) {
+        int dst = processMetadataService.getDstByTemplateId(templateId);
+        return initProcess(templateId, dst, refUniqueNo, parentRefUniqueNo, dataContext, callback);
+    }
+
+    @Override
     public long initProcess(int templateId, int destination, long refUniqueNo,
                             DataContext dataContext) {
         return initProcess(templateId, destination, refUniqueNo, dataContext, resp -> {
@@ -114,6 +128,21 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
     @Override
     public long initProcess(int templateId, int destination, long refUniqueNo,
                             DataContext dataContext, Consumer<ProcessContext> callback) {
+        return initProcess(templateId, destination, refUniqueNo, -1, dataContext, callback);
+    }
+
+    @Override
+    public long initProcess(int templateId, int destination, long refUniqueNo,
+                            long parentRefUniqueNo, DataContext dataContext) {
+        return initProcess(templateId, destination, refUniqueNo, parentRefUniqueNo, dataContext,
+            resp -> {
+            });
+    }
+
+    @Override
+    public long initProcess(int templateId, int destination, long refUniqueNo,
+                            long parentRefUniqueNo, DataContext dataContext,
+                            Consumer<ProcessContext> callback) {
         AssertUtil.largeThanValue(refUniqueNo, 0);
         final int source = -1;
 
@@ -141,13 +170,13 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
 
         final long processNo = snowflakeIdWorker.nextId();
 
-        Long processId = transactionTemplate.execute(status -> {
+        Long processId = tx(status -> {
             execute(context, handlers);
 
             // secondly create new process
             long newProcessId = processStatusCoreService.createProcessWithStatus(templateId, -1,
-                processNo, refUniqueNo, source, destination, dataContext.getOperator(),
-                dataContext.getRemark());
+                processNo, refUniqueNo, parentRefUniqueNo, source, destination,
+                dataContext.getOperator(), dataContext.getRemark());
 
             // Warning: give callback a chance to execute outta business codes, callback must after execute!
             if (callback != null) {
@@ -171,7 +200,6 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
     @Override
     public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext,
                                          Consumer<ProcessContext> callback) {
-
         TemplateCache template = processMetadataService.getTemplateByActionId(actionId);
         AssertUtil.isNotNull(template);
 
@@ -268,28 +296,37 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
                                             Consumer<ProcessContext> callback) {
         // add some validator here..
 
-        int ctId = -1;
+        List<InitParam> inits = param.getParams();
+        InitParam init = inits.get(0);
+        int ctId = init.getTemplateId();
 
-        Map<Integer, Long> processNos = new HashMap<>();
-        for (InitParam ip : param.getParams()) {
-            int id = ip.getTemplateId();
-            long no = initProcess(id, ip.getRefUniqueNo(), ip.getDataContext());
-            processNos.put(id, no);
-        }
+        TemplateCache cache = processMetadataService.getTemplateById(ctId);
+        int ptId = TplUtil.parentId(cache);
+
+        DataContext pData = param.getParentDataContext();
 
         long pRefNo = param.getParentRefUniqueNo();
         if (pRefNo == -1) {
             pRefNo = snowflakeIdWorker.nextId();
         }
 
-        TemplateCache cache = processMetadataService.getTemplateById(ctId);
-        int ptId = TplUtil.parentId(cache);
+        final long pno = pRefNo;
+        final Map<Integer, Long> processNos = new HashMap<>();
+        tx(status -> {
 
-        DataContext data = param.getParentDataContext();
+            inits.forEach(i -> {
+                int id = i.getTemplateId();
+                long cRefNo = i.getRefUniqueNo();
+                DataContext cd = i.getDataContext();
 
-        initProcess(ptId, pRefNo, data);
+                long no = initProcess(id, cRefNo, pno, cd);
+                processNos.put(id, no);
+            });
 
-        return new BatchInitResult(pRefNo, processNos);
+            return initProcess(ptId, pno, pData);
+        });
+
+        return new BatchInitResult(pno, processNos);
     }
 
     @Override

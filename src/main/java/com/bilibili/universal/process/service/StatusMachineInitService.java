@@ -15,43 +15,9 @@ import com.bilibili.universal.process.model.context.ProcessContext;
  */
 public interface StatusMachineInitService {
 
-    /**
-     * @param templateId 
-     * @param refUniqueNo
-     * @param dataContext
-     * @return
-     */
     long initProcess(final int templateId, final long refUniqueNo, final DataContext dataContext);
 
-    /**
-     * @param templateId 
-     * @param refUniqueNo
-     * @param dataContext
-     * @param callback
-     * @return
-     */
     long initProcess(final int templateId, final long refUniqueNo, final DataContext dataContext,
                      final Consumer<ProcessContext> callback);
-
-    /**
-     * @param templateId 
-     * @param destination
-     * @param refUniqueNo
-     * @param dataContext
-     * @return
-     */
-    long initProcess(final int templateId, final int destination, final long refUniqueNo,
-                     final DataContext dataContext);
-
-    /**
-     * @param templateId 
-     * @param destination
-     * @param refUniqueNo
-     * @param dataContext
-     * @param callback
-     * @return
-     */
-    long initProcess(final int templateId, final int destination, final long refUniqueNo,
-                     final DataContext dataContext, final Consumer<ProcessContext> callback);
 
 }
