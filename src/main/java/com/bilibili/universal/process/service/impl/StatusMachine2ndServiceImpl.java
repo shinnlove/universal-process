@@ -4,6 +4,7 @@
  */
 package com.bilibili.universal.process.service.impl;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -26,6 +27,9 @@ import com.bilibili.universal.process.core.ProcessBlockingCoreService;
 import com.bilibili.universal.process.core.ProcessStatusCoreService;
 import com.bilibili.universal.process.core.UniversalProcessCoreService;
 import com.bilibili.universal.process.interfaces.ActionHandler;
+import com.bilibili.universal.process.model.batch.BatchInitParam;
+import com.bilibili.universal.process.model.batch.BatchInitResult;
+import com.bilibili.universal.process.model.batch.InitParam;
 import com.bilibili.universal.process.model.blocking.ProcessBlocking;
 import com.bilibili.universal.process.model.cache.ActionCache;
 import com.bilibili.universal.process.model.cache.TemplateCache;
@@ -252,6 +256,52 @@ public class StatusMachine2ndServiceImpl implements StatusMachine2ndService {
         CompletableFuture.runAsync(() -> execute(context, asyncHandlers), asyncExecutor);
 
         return context;
+    }
+
+    @Override
+    public BatchInitResult batchInitProcess(BatchInitParam param) {
+        return batchInitProcess(param, resp -> {
+        });
+    }
+
+    @Override
+    public BatchInitResult batchInitProcess(BatchInitParam param, ProcessCallback callback) {
+        // add some validator here..
+
+        int ctId = -1;
+
+        Map<Integer, Long> processNos = new HashMap<>();
+        for (InitParam ip : param.getParams()) {
+            int id = ip.getTemplateId();
+            long no = initProcess(id, ip.getRefUniqueNo(), ip.getDataContext());
+            processNos.put(id, no);
+        }
+
+        long pRefNo = param.getParentRefUniqueNo();
+        if (pRefNo == -1) {
+            pRefNo = snowflakeIdWorker.nextId();
+        }
+
+        TemplateCache cache = processMetadataService.getTemplateById(ctId);
+        TemplateMetadata metadata = cache.getMetadata();
+        int ptId = metadata.getParentId();
+        DataContext data = param.getParentDataContext();
+
+        initProcess(ptId, pRefNo, data);
+
+        return new BatchInitResult(pRefNo, processNos);
+    }
+
+    @Override
+    public long proceedParentProcess(int actionId, long refUniqueNo, DataContext dataContext) {
+        return proceedParentProcess(actionId, refUniqueNo, dataContext, resp -> {
+        });
+    }
+
+    @Override
+    public long proceedParentProcess(int actionId, long refUniqueNo, DataContext dataContext,
+                                     ProcessCallback callback) {
+        return 0;
     }
 
     private int chooseAction(int parentTemplateId, int source, int destination) {
