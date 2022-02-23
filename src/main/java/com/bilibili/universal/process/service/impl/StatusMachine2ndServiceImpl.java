@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -18,14 +17,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.CollectionUtils;
 
 import com.bilibili.universal.process.consts.MachineConstant;
-import com.bilibili.universal.process.core.ProcessBlockingCoreService;
-import com.bilibili.universal.process.core.ProcessStatusCoreService;
-import com.bilibili.universal.process.core.UniversalProcessCoreService;
 import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.batch.BatchInitParam;
 import com.bilibili.universal.process.model.batch.BatchInitResult;
@@ -39,14 +33,11 @@ import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
 import com.bilibili.universal.process.no.SnowflakeIdWorker;
 import com.bilibili.universal.process.service.ActionExecutor;
-import com.bilibili.universal.process.service.ProcessMetadataService;
 import com.bilibili.universal.process.util.TplUtil;
 import com.bilibili.universal.util.code.SystemResultCode;
 import com.bilibili.universal.util.common.AssertUtil;
 import com.bilibili.universal.util.exception.SystemException;
 import com.bilibili.universal.util.log.LoggerUtil;
-
-import javax.annotation.Resource;
 
 /**
  * @author Tony Zhao
@@ -55,41 +46,21 @@ import javax.annotation.Resource;
 @Service
 public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
 
-    private static final Logger         logger = LoggerFactory
-        .getLogger(StatusMachine2ndServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(StatusMachine2ndServiceImpl.class);
 
     /** thread executor */
     @Autowired
     @Qualifier("processPool")
-    private ExecutorService             asyncExecutor;
+    private ExecutorService     asyncExecutor;
 
     /** snowflake id generator */
     @Autowired
     @Qualifier("snowFlakeId")
-    private SnowflakeIdWorker           snowflakeIdWorker;
-
-    /** transaction template */
-    @Resource
-    private TransactionTemplate         transactionTemplate;
-
-    @Autowired
-    private ProcessMetadataService      processMetadataService;
-
-    /** universal process core service */
-    @Autowired
-    private UniversalProcessCoreService universalProcessCoreService;
-
-    /** process status core service */
-    @Autowired
-    private ProcessStatusCoreService    processStatusCoreService;
-
-    /** process blocking core service */
-    @Autowired
-    private ProcessBlockingCoreService  processBlockingCoreService;
+    private SnowflakeIdWorker   snowflakeIdWorker;
 
     /** an executor to execute a couple of action's handlers */
     @Autowired
-    private ActionExecutor              actionExecutor;
+    private ActionExecutor      actionExecutor;
 
     @Override
     public long initProcess(int templateId, long refUniqueNo, DataContext dataContext) {
@@ -100,7 +71,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
     @Override
     public long initProcess(int templateId, long refUniqueNo, DataContext dataContext,
                             Consumer<ProcessContext> callback) {
-        int dst = processMetadataService.getDstByTemplateId(templateId);
+        int dst = getDst(templateId);
         return initProcess(templateId, dst, refUniqueNo, dataContext, callback);
     }
 
@@ -114,7 +85,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
     @Override
     public long initProcess(int templateId, long refUniqueNo, long parentRefUniqueNo,
                             DataContext dataContext, Consumer<ProcessContext> callback) {
-        int dst = processMetadataService.getDstByTemplateId(templateId);
+        int dst = getDst(templateId);
         return initProcess(templateId, dst, refUniqueNo, parentRefUniqueNo, dataContext, callback);
     }
 
@@ -146,8 +117,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
         AssertUtil.largeThanValue(refUniqueNo, 0);
         final int source = -1;
 
-        TemplateCache template = processMetadataService.getTemplateById(templateId);
-        AssertUtil.isNotNull(template);
+        TemplateCache template = getCache(templateId);
 
         Map<Integer, List<ActionHandler>> inits = template.getInitializers();
         if (CollectionUtils.isEmpty(inits) || !inits.containsKey(destination)) {
@@ -164,9 +134,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
             dataContext);
 
         // fast query once to check if it's a new process
-        UniversalProcess nProcess = universalProcessCoreService.getProcessByRefUniqueNo(refUniqueNo,
-            false);
-        AssertUtil.isNull(nProcess);
+        existProcess(refUniqueNo);
 
         final long processNo = snowflakeIdWorker.nextId();
 
@@ -174,9 +142,9 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
             execute(context, handlers);
 
             // secondly create new process
-            long newProcessId = processStatusCoreService.createProcessWithStatus(templateId, -1,
-                processNo, refUniqueNo, parentRefUniqueNo, source, destination,
-                dataContext.getOperator(), dataContext.getRemark());
+            long newProcessId = createProcess(templateId, -1, processNo, refUniqueNo,
+                parentRefUniqueNo, source, destination, dataContext.getOperator(),
+                dataContext.getRemark());
 
             // Warning: give callback a chance to execute outta business codes, callback must after execute!
             if (callback != null) {
@@ -200,9 +168,21 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
     @Override
     public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext,
                                          Consumer<ProcessContext> callback) {
-        TemplateCache template = processMetadataService.getTemplateByActionId(actionId);
-        AssertUtil.isNotNull(template);
+        // default proceed behavior is delegate proceed parent if exists parent process...
+        return proceedProcess(actionId, refUniqueNo, dataContext, callback, true);
+    }
 
+    @Override
+    public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext,
+                                         boolean proceedParent) {
+        return proceedProcess(actionId, refUniqueNo, dataContext, resp -> {
+        }, proceedParent);
+    }
+
+    @Override
+    public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext,
+                                         Consumer<ProcessContext> callback, boolean proceedParent) {
+        TemplateCache template = getTpl(actionId);
         TemplateMetadata metadata = template.getMetadata();
 
         int templateId = metadata.getId();
@@ -217,22 +197,17 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
         // prepare proceed context and handlers
         ProcessContext context = buildProContext(templateId, actionId, refUniqueNo, source,
             destination, dataContext);
-        List<ActionHandler> syncHandlers = processMetadataService.getExecutions(actionId, true);
-        List<ActionHandler> asyncHandlers = processMetadataService.getExecutions(actionId, false);
+        List<ActionHandler> syncHandlers = handlers(actionId, true);
+        List<ActionHandler> asyncHandlers = handlers(actionId, false);
 
         // fast query once to check if it's a new process
-        UniversalProcess nProcess = universalProcessCoreService.getProcessByRefUniqueNo(refUniqueNo,
-            false);
-        AssertUtil.notNull(nProcess);
+        existProcess(refUniqueNo);
 
         // 6th: check current process info if process exists
         Integer result = tx(status -> {
 
             // need to lock current process
-            UniversalProcess uProcess = universalProcessCoreService
-                .getProcessByRefUniqueNo(refUniqueNo, true);
-            AssertUtil.isNotNull(uProcess, SystemResultCode.PARAM_INVALID,
-                MachineConstant.NO_PROCESS_IN_SYSTEM);
+            UniversalProcess uProcess = lockProcess(refUniqueNo);
 
             int currentStatus = uProcess.getCurrentStatus();
             long pProcessNo = uProcess.getParentProcessNo();
@@ -254,7 +229,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
 
             //            reconcileParent(processNo, parentProcessNo, needReconcile, reconcileMode);
 
-            if (pProcessNo > 0) {
+            if (pProcessNo > 0 && proceedParent) {
                 UniversalProcess pProcess = universalProcessCoreService.getProcessByNo(pProcessNo);
                 long pRefUniqueNo = pProcess.getRefUniqueNo();
                 int ptId = pProcess.getTemplateId();
@@ -338,11 +313,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
     @Override
     public long proceedParentProcess(int actionId, long refUniqueNo, DataContext dataContext,
                                      Consumer<ProcessContext> callback) {
-        return 0;
-    }
-
-    private <R> R tx(final Function<TransactionStatus, R> function) {
-        return transactionTemplate.execute(status -> function.apply(status));
+        return 1L;
     }
 
     private void execute(final ProcessContext context,
