@@ -43,4 +43,6 @@ public interface ProcessMetadataService {
 
     int getACStatus(int templateId);
 
+    boolean isParentTpl(int templateId);
+
 }

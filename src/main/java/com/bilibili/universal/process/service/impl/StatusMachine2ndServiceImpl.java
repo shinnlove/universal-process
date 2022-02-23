@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,6 @@ import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.batch.BatchInitParam;
 import com.bilibili.universal.process.model.batch.BatchInitResult;
 import com.bilibili.universal.process.model.batch.InitParam;
-import com.bilibili.universal.process.model.blocking.ProcessBlocking;
 import com.bilibili.universal.process.model.cache.ActionCache;
 import com.bilibili.universal.process.model.cache.TemplateCache;
 import com.bilibili.universal.process.model.cache.TemplateMetadata;
@@ -27,9 +27,7 @@ import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
 import com.bilibili.universal.process.util.TplUtil;
-import com.bilibili.universal.util.code.SystemResultCode;
 import com.bilibili.universal.util.common.AssertUtil;
-import com.bilibili.universal.util.exception.SystemException;
 import com.bilibili.universal.util.log.LoggerUtil;
 
 /**
@@ -37,7 +35,7 @@ import com.bilibili.universal.util.log.LoggerUtil;
  * @version $Id: StatusMachine2ndServiceImpl.java, v 0.1 2022-02-09 5:50 PM Tony Zhao Exp $$
  */
 @Service
-public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
+public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategyService {
 
     private static final Logger logger = LoggerFactory.getLogger(StatusMachine2ndServiceImpl.class);
 
@@ -109,7 +107,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
         }
 
         // 4th: prepare proceed context
-        ProcessContext context = buildProContext(templateId, refUniqueNo, source, destination,
+        ProcessContext context = buildContext(templateId, refUniqueNo, source, destination,
             dataContext);
 
         // fast query once to check if it's a new process
@@ -146,94 +144,134 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
     @Override
     public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext,
                                          Consumer<ProcessContext> callback) {
-        // default proceed behavior is delegate proceed parent if exists parent process...
-        return proceedProcess(actionId, refUniqueNo, dataContext, callback, true);
+        // default proceed behavior is:
+        // a) delegate proceed parent if is the slowest child and exists parent process...
+        // b) delegate proceed children if proceed parent process...
+        return proceedProcess(actionId, refUniqueNo, dataContext, callback, true, true);
     }
 
     @Override
     public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext,
-                                         boolean proceedParent) {
+                                         boolean proceedParent, boolean proceedChildren) {
         return proceedProcess(actionId, refUniqueNo, dataContext, resp -> {
-        }, proceedParent);
+        }, proceedParent, proceedChildren);
     }
 
     @Override
     public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext,
-                                         Consumer<ProcessContext> callback, boolean proceedParent) {
-        TemplateCache template = getTpl(actionId);
-        TemplateMetadata metadata = template.getMetadata();
-
-        int templateId = metadata.getId();
-        int needReconcile = metadata.getCompleteReconcileParent();
-        int reconcileMode = metadata.getCoordinateMode();
-
-        Map<Integer, ActionCache> actionMap = template.getActions();
-        ActionCache cache = actionMap.get(actionId);
-        final int source = cache.getSource();
-        final int destination = cache.getDestination();
-
-        // prepare proceed context and handlers
-        ProcessContext context = buildProContext(templateId, actionId, refUniqueNo, source,
-            destination, dataContext);
-        List<ActionHandler> syncHandlers = handlers(actionId, true);
-        List<ActionHandler> asyncHandlers = handlers(actionId, false);
-
+                                         Consumer<ProcessContext> callback, boolean proceedParent,
+                                         boolean proceedChildren) {
         // fast query once to check if it's a new process
         existRefProcess(refUniqueNo);
 
+        TemplateCache template = getTpl(actionId);
+
+        TemplateMetadata metadata = template.getMetadata();
+        int templateId = metadata.getId();
+
+        Map<Integer, ActionCache> actionMap = template.getActions();
+        ActionCache cache = actionMap.get(actionId);
+        final int src = cache.getSource();
+        final int dst = cache.getDestination();
+
+        // prepare proceed context
+        final ProcessContext context = buildContext(templateId, actionId, refUniqueNo, src, dst,
+            dataContext);
+
         // 6th: check current process info if process exists
-        Integer result = tx(status -> {
+        Integer r = tx(status -> {
 
             // need to lock current process
-            UniversalProcess uProcess = lockRefProcess(refUniqueNo);
+            UniversalProcess process = lockRefProcess(refUniqueNo);
 
-            int currentStatus = uProcess.getCurrentStatus();
-            long pProcessNo = uProcess.getParentProcessNo();
-            long processNo = uProcess.getProcessNo();
-            context.setProcessNo(processNo);
+            int current = process.getCurrentStatus();
+            long pno = process.getParentProcessNo();
+            long no = process.getProcessNo();
+            context.setProcessNo(no);
 
             // use status flow reflection to validate state flow correct
-            checkSourceStatus(currentStatus, source);
+            checkSourceStatus(current, src);
 
             // check no blocking in way..
-            checkProcessBlocking(processNo);
+            checkBlocking(no);
 
             // real execute action's handlers
-            execute(context, syncHandlers);
+            execute(context, handlers(actionId, true));
 
             // service which operates the combination of status
-            proceedProcessStatus(templateId, actionId, processNo, source, destination,
-                dataContext.getOperator(), dataContext.getRemark());
+            proceedProcessStatus(templateId, actionId, no, src, dst, dataContext.getOperator(),
+                dataContext.getRemark());
 
-            //            reconcileParent(processNo, parentProcessNo, needReconcile, reconcileMode);
+            if (pno > 0 && proceedParent) {
+                // child proceed parent
 
-            if (pProcessNo > 0 && proceedParent) {
-                UniversalProcess pProcess = queryNoProcess(pProcessNo);
-                long pRefUniqueNo = pProcess.getRefUniqueNo();
+                UniversalProcess pProcess = queryNoProcess(pno);
+                long pRefNo = pProcess.getRefUniqueNo();
                 int ptId = pProcess.getTemplateId();
-                int pActionId = chooseAction(ptId, source, destination);
+                int pActionId = chooseParentAction(ptId, src, dst);
                 if (pActionId > 0) {
-                    Object pParam = chooseParam(cache, context, ptId);
+                    Object pParam = chooseParentParam(cache, context, ptId);
                     DataContext d = new DataContext(pParam);
 
-                    ProcessContext pContext = proceedProcess(pActionId, pRefUniqueNo, d);
-                    LoggerUtil.info(logger, "successfully proceed parent, pContext=", pContext);
+                    // special warning: cascade proceed parent, never proceed any children!
+                    ProcessContext pc = proceedProcess(pActionId, pRefNo, d, true, false);
+                    LoggerUtil.info(logger, "successfully proceed parent, pContext=", pc);
+
+                    context.parent(pc);
                 }
             }
 
-            // give a change for business codes to execute outta logic, callback must after execute!
+            if (isParentTpl(templateId) && proceedChildren) {
+                // parent proceed child
+
+                List<UniversalProcess> children = childrenNo(no);
+
+                // filter => children2
+                List<UniversalProcess> needs = children.stream().filter(p -> {
+
+                    if (p.getCurrentStatus() != src) {
+                        // todo: search child mapping, src is from parent!
+                        return false;
+                    }
+
+                    return true;
+
+                }).collect(Collectors.toList());
+
+                // children2 forEach search ActionId
+
+                needs.forEach(n -> {
+                    long nRefNo = n.getRefUniqueNo();
+                    int ntId = n.getTemplateId();
+                    int nActionId = chooseChildAction(ntId, src, dst);
+                    if (nActionId > 0) {
+                        Object cParam = chooseChildParam(cache, context);
+                        DataContext d = new DataContext(cParam);
+
+                        // special warning: cascade proceed appropriate children, never proceed any parent!
+                        ProcessContext nc = proceedProcess(nActionId, nRefNo, d, false, true);
+                        LoggerUtil.info(logger, "successfully proceed children, nContext=", nc);
+
+                        context.children(nc);
+                    }
+                });
+
+            }
+
+            // give a change for business codes to execute outta logic, 
+            // pay special attention: this callback must be after recursive proceed!
             if (callback != null) {
                 callback.accept(context);
             }
 
             return 1;
 
-        }); // 6th execute tx
+        }); // tx
 
-        AssertUtil.largeThanValue(result, 0);
+        AssertUtil.largeThanValue(r, 0);
 
         // At last, execute async handlers outta transaction!
-        runAsync(() -> execute(context, asyncHandlers));
+        runAsync(() -> execute(context, handlers(actionId, false)));
 
         return context;
     }
@@ -280,54 +318,6 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
         });
 
         return new BatchInitResult(pno, processNos);
-    }
-
-    @Override
-    public long proceedParentProcess(int actionId, long refUniqueNo, DataContext dataContext) {
-        return proceedParentProcess(actionId, refUniqueNo, dataContext, resp -> {
-        });
-    }
-
-    @Override
-    public long proceedParentProcess(int actionId, long refUniqueNo, DataContext dataContext,
-                                     Consumer<ProcessContext> callback) {
-        return 1L;
-    }
-
-    /**
-     * Check there is no blocking issue or all process have reached final destination status.
-     *
-     * @param processNo     the specific check processNo.
-     */
-    private void checkProcessBlocking(long processNo) {
-        // check there is no blocking issue or all process have reached final destination status
-        List<ProcessBlocking> blockingList = blockingByNo(processNo);
-        if (!CollectionUtils.isEmpty(blockingList)) {
-            for (ProcessBlocking b : blockingList) {
-                long bProcessNo = b.getMainProcessNo();
-                UniversalProcess bProcess = queryNoProcess(bProcessNo);
-                int btId = bProcess.getTemplateId();
-                int bStatus = bProcess.getCurrentStatus();
-                if (!isFinalStatus(btId, bStatus)) {
-                    throw new SystemException(SystemResultCode.SYSTEM_ERROR,
-                        MachineConstant.STATUS_HAS_BLOCKING_PROCESS);
-                }
-            }
-        } // if blocking
-    }
-
-    private int chooseAction(int parentTemplateId, int source, int destination) {
-        TemplateCache cache = getCache(parentTemplateId);
-        Map<Integer, Map<Integer, ActionCache>> parentActionDst = cache.getActionTable();
-        if (parentActionDst.containsKey(destination)) {
-            Map<Integer, ActionCache> dstMapping = parentActionDst.get(destination);
-            if (dstMapping.containsKey(source)) {
-                ActionCache dstAction = dstMapping.get(source);
-                // parent revising action id
-                return dstAction.getActionId();
-            }
-        }
-        return -1;
     }
 
     private void reconcileParent(long selfProcessNo, long parentProcessNo, int needReconcile,

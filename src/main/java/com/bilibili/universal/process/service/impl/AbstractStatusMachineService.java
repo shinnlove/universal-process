@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.CollectionUtils;
 
 import com.bilibili.universal.process.consts.MachineConstant;
 import com.bilibili.universal.process.core.ProcessBlockingCoreService;
@@ -24,11 +25,13 @@ import com.bilibili.universal.process.core.UniversalProcessCoreService;
 import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.blocking.ProcessBlocking;
 import com.bilibili.universal.process.model.cache.TemplateCache;
+import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
 import com.bilibili.universal.process.no.SnowflakeIdWorker;
 import com.bilibili.universal.process.service.ActionExecutor;
 import com.bilibili.universal.process.service.ProcessMetadataService;
+import com.bilibili.universal.process.service.StatusMachine2ndService;
 import com.bilibili.universal.util.code.SystemResultCode;
 import com.bilibili.universal.util.common.AssertUtil;
 import com.bilibili.universal.util.exception.SystemException;
@@ -42,7 +45,7 @@ import javax.annotation.Resource;
  * @author Tony Zhao
  * @version $Id: AbstractStatusMachineService.java, v 0.1 2022-02-23 12:48 PM Tony Zhao Exp $$
  */
-public abstract class AbstractStatusMachineService extends AbstractStatusMachineUtilService {
+public abstract class AbstractStatusMachineService implements StatusMachine2ndService {
 
     private static final Logger         logger = LoggerFactory
         .getLogger(AbstractStatusMachineService.class);
@@ -98,8 +101,7 @@ public abstract class AbstractStatusMachineService extends AbstractStatusMachine
     }
 
     protected List<ActionHandler> handlers(int actionId, boolean isSync) {
-        List<ActionHandler> syncHandlers = processMetadataService.getExecutions(actionId, isSync);
-        return syncHandlers;
+        return processMetadataService.getExecutions(actionId, isSync);
     }
 
     protected UniversalProcess queryNoProcess(long processNo) {
@@ -143,12 +145,15 @@ public abstract class AbstractStatusMachineService extends AbstractStatusMachine
     }
 
     protected List<UniversalProcess> siblingsByNo(long parentNo, long selfNo) {
-        List<UniversalProcess> childProcesses = universalProcessCoreService
-            .getProcessListByParentProcessNo(parentNo);
+        List<UniversalProcess> childProcesses = childrenNo(parentNo);
         List<UniversalProcess> otherChildProcessList = childProcesses.stream()
             .filter(t -> t.getProcessNo() != selfNo).collect(Collectors.toList());
 
         return otherChildProcessList;
+    }
+
+    protected List<UniversalProcess> childrenNo(long parentNo) {
+        return universalProcessCoreService.getProcessListByParentProcessNo(parentNo);
     }
 
     protected int getACStatus(int templateId) {
@@ -157,6 +162,32 @@ public abstract class AbstractStatusMachineService extends AbstractStatusMachine
 
     protected boolean isFinalStatus(int templateId, int status) {
         return processMetadataService.isFinalStatus(templateId, status);
+    }
+
+    protected boolean isParentTpl(int templateId) {
+        return processMetadataService.isParentTpl(templateId);
+    }
+
+    /**
+     * Check there is no blocking issue or all process have reached final destination status.
+     *
+     * @param processNo     the specific check processNo.
+     */
+    protected void checkBlocking(long processNo) {
+        // check there is no blocking issue or all process have reached final destination status
+        List<ProcessBlocking> blockingList = blockingByNo(processNo);
+        if (!CollectionUtils.isEmpty(blockingList)) {
+            for (ProcessBlocking b : blockingList) {
+                long bProcessNo = b.getMainProcessNo();
+                UniversalProcess bProcess = queryNoProcess(bProcessNo);
+                int btId = bProcess.getTemplateId();
+                int bStatus = bProcess.getCurrentStatus();
+                if (!isFinalStatus(btId, bStatus)) {
+                    throw new SystemException(SystemResultCode.SYSTEM_ERROR,
+                        MachineConstant.STATUS_HAS_BLOCKING_PROCESS);
+                }
+            }
+        } // if blocking
     }
 
     protected void execute(final ProcessContext context,
@@ -181,6 +212,31 @@ public abstract class AbstractStatusMachineService extends AbstractStatusMachine
 
     protected long nextId() {
         return snowflakeIdWorker.nextId();
+    }
+
+    protected ProcessContext buildContext(int templateId, long refUniqueNo, int source,
+                                          int destination, DataContext dataContext) {
+        return buildContext(templateId, -1, refUniqueNo, source, destination, dataContext);
+    }
+
+    protected ProcessContext buildContext(int templateId, int actionId, long refUniqueNo,
+                                          int source, int destination, DataContext dataContext) {
+        ProcessContext context = new ProcessContext();
+        context.setTemplateId(templateId);
+        context.setActionId(actionId);
+        context.setRefUniqueNo(refUniqueNo);
+        context.setSourceStatus(source);
+        context.setDestinationStatus(destination);
+        context.setDataContext(dataContext);
+        return context;
+    }
+
+    protected void checkSourceStatus(int currentStatus, int source) {
+        // -1 represents universal status.
+        if (currentStatus != source && source != -1) {
+            throw new SystemException(SystemResultCode.PARAM_INVALID,
+                MachineConstant.SOURCE_STATUS_INCORRECT);
+        }
     }
 
 }

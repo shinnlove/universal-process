@@ -8,7 +8,6 @@ import java.util.function.Consumer;
 
 import com.bilibili.universal.process.model.batch.BatchInitParam;
 import com.bilibili.universal.process.model.batch.BatchInitResult;
-import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 
 /**
@@ -30,25 +29,5 @@ public interface StatusMachineBatchService {
      */
     BatchInitResult batchInitProcess(final BatchInitParam param,
                                      final Consumer<ProcessContext> callback);
-
-    /**
-     * @param actionId 
-     * @param refUniqueNo
-     * @param dataContext
-     * @return
-     */
-    long proceedParentProcess(final int actionId, final long refUniqueNo,
-                              final DataContext dataContext);
-
-    /**
-     * @param actionId 
-     * @param refUniqueNo
-     * @param dataContext
-     * @param callback
-     * @return
-     */
-    long proceedParentProcess(final int actionId, final long refUniqueNo,
-                              final DataContext dataContext,
-                              final Consumer<ProcessContext> callback);
 
 }

@@ -63,15 +63,21 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
     /** action id should be unique. action id => template cache */
     private Map<Integer, TemplateCache> actionIdCache   = new HashMap<>();
 
+    /** parent tpl cache */
+    private Set<Integer>                parentTplCache  = new HashSet<>();
+
     @Override
     public void initialize(InputStream stream) {
-        // Step1: parse template from xml definition
+        // parse template from xml definition
         XmlProcessTemplate xp = XmlTemplateParser.parse(stream);
+
+        // cache parent tpl id
+        cacheParent(xp);
 
         // parse action handlers and cache status
         TemplateCache template = cacheTemplate(xp);
 
-        // Step3: build cache
+        // build cache
         mappingCache(template);
     }
 
@@ -190,6 +196,13 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
         int coordinate = xp.getCoordinate();
 
         return new TemplateMetadata(id, parentId, name, desc, reconcile, coordinate);
+    }
+
+    private void cacheParent(XmlProcessTemplate xp) {
+        int parentId = xp.getParent();
+        if (parentId > 0 && !parentTplCache.contains(parentId)) {
+            parentTplCache.add(xp.getParent());
+        }
     }
 
     @SuppressWarnings("rawtypes")
@@ -374,6 +387,11 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
         }
 
         return -1;
+    }
+
+    @Override
+    public boolean isParentTpl(int templateId) {
+        return parentTplCache.contains(templateId);
     }
 
     private ActionCache getActionCache(int actionId) {

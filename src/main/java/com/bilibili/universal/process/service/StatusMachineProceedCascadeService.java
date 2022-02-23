@@ -22,11 +22,13 @@ public interface StatusMachineProceedCascadeService extends StatusMachineProceed
 
     @Deprecated
     ProcessContext proceedProcess(final int actionId, final long refUniqueNo,
-                                  final DataContext dataContext, boolean proceedParent);
+                                  final DataContext dataContext, boolean proceedParent,
+                                  boolean proceedChildren);
 
     @Deprecated
     ProcessContext proceedProcess(final int actionId, final long refUniqueNo,
                                   final DataContext dataContext,
-                                  final Consumer<ProcessContext> callback, boolean proceedParent);
+                                  final Consumer<ProcessContext> callback, boolean proceedParent,
+                                  boolean proceedChildren);
 
 }
