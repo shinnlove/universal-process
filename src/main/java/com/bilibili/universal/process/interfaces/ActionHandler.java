@@ -30,10 +30,19 @@ public interface ActionHandler<T, R> extends BaseHandler {
      * @return 
      */
     default Class<?> paramType() {
-        Type[] types = this.getClass().getGenericInterfaces();
-        ParameterizedTypeImpl pType = (ParameterizedTypeImpl) types[0];
-        Type[] genericTypes = pType.getActualTypeArguments();
-        return (Class<?>) genericTypes[0];
+        Type[] interfaceTypes = this.getClass().getGenericInterfaces();
+        Type it = interfaceTypes[0];
+
+        ParameterizedTypeImpl pType = (ParameterizedTypeImpl) it;
+        Type[] pInterfaces = pType.getActualTypeArguments();
+        Type pt = pInterfaces[0];
+
+        if (pt.getClass().isAssignableFrom(ParameterizedTypeImpl.class)) {
+            ParameterizedTypeImpl actual = (ParameterizedTypeImpl) pt;
+            return actual.getRawType();
+        } else {
+            return (Class<?>) pt;
+        }
     }
 
     /**
