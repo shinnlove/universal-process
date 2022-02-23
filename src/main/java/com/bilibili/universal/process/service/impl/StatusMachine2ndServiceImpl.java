@@ -7,15 +7,10 @@ package com.bilibili.universal.process.service.impl;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -31,8 +26,6 @@ import com.bilibili.universal.process.model.cache.TemplateMetadata;
 import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
-import com.bilibili.universal.process.no.SnowflakeIdWorker;
-import com.bilibili.universal.process.service.ActionExecutor;
 import com.bilibili.universal.process.util.TplUtil;
 import com.bilibili.universal.util.code.SystemResultCode;
 import com.bilibili.universal.util.common.AssertUtil;
@@ -47,20 +40,6 @@ import com.bilibili.universal.util.log.LoggerUtil;
 public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
 
     private static final Logger logger = LoggerFactory.getLogger(StatusMachine2ndServiceImpl.class);
-
-    /** thread executor */
-    @Autowired
-    @Qualifier("processPool")
-    private ExecutorService     asyncExecutor;
-
-    /** snowflake id generator */
-    @Autowired
-    @Qualifier("snowFlakeId")
-    private SnowflakeIdWorker   snowflakeIdWorker;
-
-    /** an executor to execute a couple of action's handlers */
-    @Autowired
-    private ActionExecutor      actionExecutor;
 
     @Override
     public long initProcess(int templateId, long refUniqueNo, DataContext dataContext) {
@@ -134,17 +113,16 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
             dataContext);
 
         // fast query once to check if it's a new process
-        existProcess(refUniqueNo);
+        existRefProcess(refUniqueNo);
 
-        final long processNo = snowflakeIdWorker.nextId();
+        final long pno = nextId();
 
         Long processId = tx(status -> {
             execute(context, handlers);
 
             // secondly create new process
-            long newProcessId = createProcess(templateId, -1, processNo, refUniqueNo,
-                parentRefUniqueNo, source, destination, dataContext.getOperator(),
-                dataContext.getRemark());
+            long newProcessId = createProcess(templateId, -1, pno, refUniqueNo, parentRefUniqueNo,
+                source, destination, dataContext.getOperator(), dataContext.getRemark());
 
             // Warning: give callback a chance to execute outta business codes, callback must after execute!
             if (callback != null) {
@@ -156,7 +134,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
 
         AssertUtil.largeThanValue(processId, 0);
 
-        return processNo;
+        return pno;
     }
 
     @Override
@@ -201,13 +179,13 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
         List<ActionHandler> asyncHandlers = handlers(actionId, false);
 
         // fast query once to check if it's a new process
-        existProcess(refUniqueNo);
+        existRefProcess(refUniqueNo);
 
         // 6th: check current process info if process exists
         Integer result = tx(status -> {
 
             // need to lock current process
-            UniversalProcess uProcess = lockProcess(refUniqueNo);
+            UniversalProcess uProcess = lockRefProcess(refUniqueNo);
 
             int currentStatus = uProcess.getCurrentStatus();
             long pProcessNo = uProcess.getParentProcessNo();
@@ -224,13 +202,13 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
             execute(context, syncHandlers);
 
             // service which operates the combination of status
-            processStatusCoreService.proceedProcessStatus(templateId, actionId, processNo, source,
-                destination, dataContext.getOperator(), dataContext.getRemark());
+            proceedProcessStatus(templateId, actionId, processNo, source, destination,
+                dataContext.getOperator(), dataContext.getRemark());
 
             //            reconcileParent(processNo, parentProcessNo, needReconcile, reconcileMode);
 
             if (pProcessNo > 0 && proceedParent) {
-                UniversalProcess pProcess = universalProcessCoreService.getProcessByNo(pProcessNo);
+                UniversalProcess pProcess = queryNoProcess(pProcessNo);
                 long pRefUniqueNo = pProcess.getRefUniqueNo();
                 int ptId = pProcess.getTemplateId();
                 int pActionId = chooseAction(ptId, source, destination);
@@ -255,7 +233,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
         AssertUtil.largeThanValue(result, 0);
 
         // At last, execute async handlers outta transaction!
-        CompletableFuture.runAsync(() -> execute(context, asyncHandlers), asyncExecutor);
+        runAsync(() -> execute(context, asyncHandlers));
 
         return context;
     }
@@ -275,14 +253,14 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
         InitParam init = inits.get(0);
         int ctId = init.getTemplateId();
 
-        TemplateCache cache = processMetadataService.getTemplateById(ctId);
+        TemplateCache cache = getCache(ctId);
         int ptId = TplUtil.parentId(cache);
 
         DataContext pData = param.getParentDataContext();
 
         long pRefNo = param.getParentRefUniqueNo();
         if (pRefNo == -1) {
-            pRefNo = snowflakeIdWorker.nextId();
+            pRefNo = nextId();
         }
 
         final long pno = pRefNo;
@@ -316,18 +294,6 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
         return 1L;
     }
 
-    private void execute(final ProcessContext context,
-                         final List<ActionHandler> handlers) throws SystemException {
-        // real execute action's handlers
-        try {
-            actionExecutor.proceed(context, handlers);
-        } catch (Exception e) {
-            LoggerUtil.error(logger, e, "Handler execution has error occurred, ", e.getMessage());
-            // special warn: according to meeting discussion, the whole tx should be interrupted if one handler execute failed.
-            throw new SystemException(SystemResultCode.SYSTEM_ERROR, e, e.getMessage());
-        }
-    }
-
     /**
      * Check there is no blocking issue or all process have reached final destination status.
      *
@@ -335,15 +301,14 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
      */
     private void checkProcessBlocking(long processNo) {
         // check there is no blocking issue or all process have reached final destination status
-        List<ProcessBlocking> blockingList = processBlockingCoreService
-            .getBlockingByProcessNo(processNo);
+        List<ProcessBlocking> blockingList = blockingByNo(processNo);
         if (!CollectionUtils.isEmpty(blockingList)) {
             for (ProcessBlocking b : blockingList) {
                 long bProcessNo = b.getMainProcessNo();
-                UniversalProcess bProcess = universalProcessCoreService.getProcessByNo(bProcessNo);
+                UniversalProcess bProcess = queryNoProcess(bProcessNo);
                 int btId = bProcess.getTemplateId();
                 int bStatus = bProcess.getCurrentStatus();
-                if (!processMetadataService.isFinalStatus(btId, bStatus)) {
+                if (!isFinalStatus(btId, bStatus)) {
                     throw new SystemException(SystemResultCode.SYSTEM_ERROR,
                         MachineConstant.STATUS_HAS_BLOCKING_PROCESS);
                 }
@@ -352,7 +317,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
     }
 
     private int chooseAction(int parentTemplateId, int source, int destination) {
-        TemplateCache cache = processMetadataService.getTemplateById(parentTemplateId);
+        TemplateCache cache = getCache(parentTemplateId);
         Map<Integer, Map<Integer, ActionCache>> parentActionDst = cache.getActionTable();
         if (parentActionDst.containsKey(destination)) {
             Map<Integer, ActionCache> dstMapping = parentActionDst.get(destination);
@@ -370,27 +335,20 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
         // if status reached to end, then check reconcile mode
         if (parentProcessNo != -1 && needReconcile == 1) {
             // get parent process
-            UniversalProcess parentProcess = universalProcessCoreService
-                .lockProcessByProcessNo(parentProcessNo);
+            UniversalProcess parentProcess = lockNoProcess(parentProcessNo);
             int pTemplateId = parentProcess.getTemplateId();
             int pActionId = -1;
             int pcStatus = parentProcess.getCurrentStatus();
 
-            // get other sibling process
-            List<UniversalProcess> childProcesses = universalProcessCoreService
-                .getProcessListByParentProcessNo(parentProcessNo);
-            List<UniversalProcess> otherChildProcessList = childProcesses.stream()
-                .filter(t -> t.getProcessNo() != selfProcessNo).collect(Collectors.toList());
-
             // check reconcile flag
             boolean needUpdateParent = true;
             if (reconcileMode == 1) {
-                // cooperate mode:
+                // cooperate mode: get other sibling process
                 // loop to check each child process status with no lock and update parent status if ok
-                for (UniversalProcess up : otherChildProcessList) {
+                for (UniversalProcess up : siblingsByNo(parentProcessNo, selfProcessNo)) {
                     int uptId = up.getTemplateId();
                     int upStatus = up.getCurrentStatus();
-                    boolean isFinal = processMetadataService.isFinalStatus(uptId, upStatus);
+                    boolean isFinal = isFinalStatus(uptId, upStatus);
                     if (!isFinal) {
                         needUpdateParent = false;
                     }
@@ -399,10 +357,9 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineService {
 
             // need reconcile parent
             if (needUpdateParent) {
-                int pacStatus = processMetadataService.getACStatus(pTemplateId);
-                processStatusCoreService.proceedProcessStatus(pTemplateId, pActionId,
-                    parentProcessNo, pcStatus, pacStatus, MachineConstant.DEFAULT_OPERATOR,
-                    MachineConstant.DEFAULT_REMARK);
+                int pacStatus = getACStatus(pTemplateId);
+                proceedProcessStatus(pTemplateId, pActionId, parentProcessNo, pcStatus, pacStatus,
+                    MachineConstant.DEFAULT_OPERATOR, MachineConstant.DEFAULT_REMARK);
             }
 
         } // if need reconcile
