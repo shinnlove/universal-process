@@ -12,7 +12,6 @@ import java.util.function.Consumer;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import com.bilibili.universal.process.consts.MachineConstant;
 import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.batch.BatchInitParam;
 import com.bilibili.universal.process.model.batch.BatchInitResult;
@@ -33,12 +32,14 @@ import com.bilibili.universal.util.common.AssertUtil;
 @Service
 public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategyService {
 
+    @SuppressWarnings("rawtypes")
     @Override
     public long initProcess(int templateId, long refUniqueNo, DataContext dataContext) {
         return initProcess(templateId, refUniqueNo, dataContext, resp -> {
         });
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public long initProcess(int templateId, long refUniqueNo, DataContext dataContext,
                             Consumer<ProcessContext> callback) {
@@ -46,6 +47,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         return initProcess(templateId, dst, refUniqueNo, dataContext, callback);
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public long initProcess(int templateId, long refUniqueNo, long parentRefUniqueNo,
                             DataContext dataContext) {
@@ -53,6 +55,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         });
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public long initProcess(int templateId, long refUniqueNo, long parentRefUniqueNo,
                             DataContext dataContext, Consumer<ProcessContext> callback) {
@@ -60,6 +63,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         return initProcess(templateId, dst, refUniqueNo, parentRefUniqueNo, dataContext, callback);
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public long initProcess(int templateId, int destination, long refUniqueNo,
                             DataContext dataContext) {
@@ -67,12 +71,14 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         });
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public long initProcess(int templateId, int destination, long refUniqueNo,
                             DataContext dataContext, Consumer<ProcessContext> callback) {
         return initProcess(templateId, destination, refUniqueNo, -1, dataContext, callback);
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public long initProcess(int templateId, int destination, long refUniqueNo,
                             long parentRefUniqueNo, DataContext dataContext) {
@@ -81,6 +87,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
             });
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public long initProcess(int templateId, int destination, long refUniqueNo,
                             long parentRefUniqueNo, DataContext dataContext,
@@ -129,12 +136,14 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         return pno;
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext) {
         return proceedProcess(actionId, refUniqueNo, dataContext, resp -> {
         });
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext,
                                          Consumer<ProcessContext> callback) {
@@ -144,6 +153,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         return proceedProcess(actionId, refUniqueNo, dataContext, callback, true, true);
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext,
                                          boolean proceedParent, boolean proceedChildren) {
@@ -151,6 +161,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         }, proceedParent, proceedChildren);
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public ProcessContext proceedProcess(int actionId, long refUniqueNo, DataContext dataContext,
                                          Consumer<ProcessContext> callback, boolean proceedParent,
@@ -197,59 +208,48 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                 dataContext.getRemark());
 
             if (pRefNo > 0 && proceedParent) {
-                // child proceed parent
+                // slowest child will proceed parent
 
                 UniversalProcess pProcess = queryRefProcess(pRefNo);
                 int pid = pProcess.getTemplateId();
                 int pSrc = pProcess.getCurrentStatus();
 
-                int slowest = slowestChildrenStatus(childrenRef(pRefNo));
+                int slowest = slowestChildrenStatus(refChildren(pRefNo));
                 int pDst = statusC2P(pid, templateId, slowest);
 
                 if (behind(pid, pSrc, pDst)) {
                     // need proceed scenario
 
-                    int pActionId = chooseParentAction(pid, pSrc, pDst);
-                    if (pActionId > 0) {
+                    int aid = appropriateAction(pid, pSrc, pDst);
+                    if (aid > 0) {
                         // special warning: cascade proceed parent, never proceed any children!
                         DataContext d = new DataContext(chooseParentParam(cache, context, pid));
-                        ProcessContext pc = proceedProcess(pActionId, pRefNo, d, true, false);
+                        ProcessContext pc = proceedProcess(aid, pRefNo, d, true, false);
                         context.parent(pc);
                     }
                 }
             }
 
             if (isParentTpl(templateId) && proceedChildren) {
-                // parent proceed child
+                // parent could proceed appropriate children
 
-                List<UniversalProcess> children = childrenRef(refUniqueNo);
-                children.stream().filter(c -> {
-                    int cid = c.getTemplateId();
-                    int cs = c.getCurrentStatus();
+                refChildren(refUniqueNo).stream().filter(c -> inParentRefStatus(templateId, src,
+                    c.getTemplateId(), c.getCurrentStatus())).forEach(c -> {
+                        // search nearest action id in status graph for proceeding
+                        int aid = nearestAction(c.getTemplateId(), c.getCurrentStatus(), src, dst);
+                        if (aid > 0) {
+                            long cRefNo = c.getRefUniqueNo();
+                            DataContext d = new DataContext(chooseChildParam(cache, context));
 
-                    // search parent 2 child mapping
-                    if (inParentRefStatus(templateId, src, cid, cs)) {
-                        return true;
-                    }
-                    return false;
-                }).forEach(c -> {
-                    // search action id for proceeding
-                    int cid = c.getTemplateId();
-                    long cRefNo = c.getRefUniqueNo();
-                    int cs = c.getCurrentStatus();
-
-                    int cActionId = nearestChildAction(cid, cs, src, dst);
-                    if (cActionId > 0) {
-                        // special warning: cascade proceed appropriate children, never proceed any parent!
-                        DataContext d = new DataContext(chooseChildParam(cache, context));
-                        ProcessContext cc = proceedProcess(cActionId, cRefNo, d, false, true);
-                        context.children(cc);
-                    }
-                });
+                            // Special Warning: cascade proceed in one orientation, never reverse!
+                            ProcessContext pc = proceedProcess(aid, cRefNo, d, false, true);
+                            context.children(pc);
+                        }
+                    });
             }
 
             // give a change for business codes to execute outta logic, 
-            // pay special attention: this callback must be after recursive proceed!
+            // Special Warning: this callback must be after recursive proceed!
             if (callback != null) {
                 callback.accept(context);
             }
@@ -273,6 +273,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         });
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public BatchInitResult batchInitProcess(BatchInitParam param,
                                             Consumer<ProcessContext> callback) {
@@ -309,43 +310,6 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         });
 
         return new BatchInitResult(pno, processNos);
-    }
-
-    @Deprecated
-    private void reconcileParent(long selfProcessNo, long parentRefUniqueNo, int needReconcile,
-                                 int reconcileMode) {
-        // if status reached to end, then check reconcile mode
-        if (parentRefUniqueNo != -1 && needReconcile == 1) {
-            // get parent process
-            UniversalProcess parentProcess = lockNoProcess(parentRefUniqueNo);
-            int pTemplateId = parentProcess.getTemplateId();
-            long parentProcessNo = parentProcess.getProcessNo();
-            int pActionId = -1;
-            int pcStatus = parentProcess.getCurrentStatus();
-
-            // check reconcile flag
-            boolean needUpdateParent = true;
-            if (reconcileMode == 1) {
-                // cooperate mode: get other sibling process
-                // loop to check each child process status with no lock and update parent status if ok
-                for (UniversalProcess up : siblingsByRef(parentRefUniqueNo, selfProcessNo)) {
-                    int uptId = up.getTemplateId();
-                    int upStatus = up.getCurrentStatus();
-                    boolean isFinal = isFinalStatus(uptId, upStatus);
-                    if (!isFinal) {
-                        needUpdateParent = false;
-                    }
-                }
-            }
-
-            // need reconcile parent
-            if (needUpdateParent) {
-                int pacStatus = getACStatus(pTemplateId);
-                proceedProcessStatus(pTemplateId, pActionId, parentProcessNo, pcStatus, pacStatus,
-                    MachineConstant.DEFAULT_OPERATOR, MachineConstant.DEFAULT_REMARK);
-            }
-
-        } // if need reconcile
     }
 
 }

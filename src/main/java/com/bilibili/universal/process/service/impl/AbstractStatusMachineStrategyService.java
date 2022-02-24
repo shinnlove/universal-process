@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.springframework.util.CollectionUtils;
 
+import com.bilibili.universal.process.consts.MachineConstant;
 import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.cache.ActionCache;
 import com.bilibili.universal.process.model.cache.StatusCache;
@@ -57,7 +58,7 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         return getResultByClass(context, name);
     }
 
-    protected int chooseParentAction(int parentTemplateId, int source, int destination) {
+    protected int appropriateAction(int parentTemplateId, int source, int destination) {
         int actionId = -1;
         TemplateCache cache = getCache(parentTemplateId);
 
@@ -117,8 +118,8 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         return getStatusNo(arr, min);
     }
 
-    protected int nearestChildAction(int childTemplateId, int childStatus, int parentSource,
-                                     int parentDestination) {
+    protected int nearestAction(int childTemplateId, int childStatus, int parentSource,
+                                int parentDestination) {
         int actionId = -1;
 
         TemplateCache cache = getCache(childTemplateId);
@@ -229,6 +230,43 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         }
 
         return false;
+    }
+
+    @Deprecated
+    private void reconcileParent(long selfProcessNo, long parentRefUniqueNo, int needReconcile,
+                                 int reconcileMode) {
+        // if status reached to end, then check reconcile mode
+        if (parentRefUniqueNo != -1 && needReconcile == 1) {
+            // get parent process
+            UniversalProcess parentProcess = lockNoProcess(parentRefUniqueNo);
+            int pTemplateId = parentProcess.getTemplateId();
+            long parentProcessNo = parentProcess.getProcessNo();
+            int pActionId = -1;
+            int pcStatus = parentProcess.getCurrentStatus();
+
+            // check reconcile flag
+            boolean needUpdateParent = true;
+            if (reconcileMode == 1) {
+                // cooperate mode: get other sibling process
+                // loop to check each child process status with no lock and update parent status if ok
+                for (UniversalProcess up : refSiblings(parentRefUniqueNo, selfProcessNo)) {
+                    int uptId = up.getTemplateId();
+                    int upStatus = up.getCurrentStatus();
+                    boolean isFinal = isFinalStatus(uptId, upStatus);
+                    if (!isFinal) {
+                        needUpdateParent = false;
+                    }
+                }
+            }
+
+            // need reconcile parent
+            if (needUpdateParent) {
+                int pacStatus = getACStatus(pTemplateId);
+                proceedProcessStatus(pTemplateId, pActionId, parentProcessNo, pcStatus, pacStatus,
+                    MachineConstant.DEFAULT_OPERATOR, MachineConstant.DEFAULT_REMARK);
+            }
+
+        } // if need reconcile
     }
 
 }

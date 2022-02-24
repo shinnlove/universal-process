@@ -183,15 +183,15 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return processBlockingCoreService.getBlockingByProcessNo(processNo);
     }
 
-    protected List<UniversalProcess> siblingsByRef(long parentRefNo, long selfNo) {
-        List<UniversalProcess> childProcesses = childrenRef(parentRefNo);
+    protected List<UniversalProcess> refSiblings(long parentRefNo, long selfNo) {
+        List<UniversalProcess> childProcesses = refChildren(parentRefNo);
         List<UniversalProcess> otherChildProcessList = childProcesses.stream()
             .filter(t -> t.getProcessNo() != selfNo).collect(Collectors.toList());
 
         return otherChildProcessList;
     }
 
-    protected List<UniversalProcess> childrenRef(long parentRefUniqueNo) {
+    protected List<UniversalProcess> refChildren(long parentRefUniqueNo) {
         return universalProcessCoreService.getProcessListByParentRefUniqueNo(parentRefUniqueNo);
     }
 
