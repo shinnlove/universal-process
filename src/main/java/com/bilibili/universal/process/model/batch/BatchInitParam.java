@@ -32,7 +32,19 @@ public class BatchInitParam implements Serializable {
     @RequiredParam
     private List<InitParam>   params;
 
+    /**
+     * Constructor for reflect.
+     */
     public BatchInitParam() {
+    }
+
+    /**
+     * Constructor for single parameter.
+     * 
+     * @param params 
+     */
+    public BatchInitParam(List<InitParam> params) {
+        this.params = params;
     }
 
     public BatchInitParam(long parentRefUniqueNo, DataContext parentDataContext,
