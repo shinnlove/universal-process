@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -34,8 +32,6 @@ import com.bilibili.universal.util.common.AssertUtil;
  */
 @Service
 public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategyService {
-
-    private static final Logger logger = LoggerFactory.getLogger(StatusMachine2ndServiceImpl.class);
 
     @Override
     public long initProcess(int templateId, long refUniqueNo, DataContext dataContext) {
