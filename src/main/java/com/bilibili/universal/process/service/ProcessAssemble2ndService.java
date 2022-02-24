@@ -19,4 +19,9 @@ public interface ProcessAssemble2ndService {
      */
     void initialize(InputStream stream);
 
+    /**
+     * Initialize critical parent and child status mapping.
+     */
+    void initStatusRef();
+
 }

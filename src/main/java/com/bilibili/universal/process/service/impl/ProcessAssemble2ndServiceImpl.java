@@ -33,6 +33,7 @@ import com.bilibili.universal.process.model.initialization.XmlProcessHandler;
 import com.bilibili.universal.process.model.initialization.XmlProcessStatus;
 import com.bilibili.universal.process.model.initialization.XmlProcessTemplate;
 import com.bilibili.universal.process.model.status.StatusPair;
+import com.bilibili.universal.process.model.status.StatusRefMapping;
 import com.bilibili.universal.process.parser.XmlTemplateParser;
 import com.bilibili.universal.process.service.ProcessAssemble2ndService;
 import com.bilibili.universal.process.service.ProcessMetadataService;
@@ -51,20 +52,23 @@ import com.bilibili.universal.util.log.LoggerUtil;
 public class ProcessAssemble2ndServiceImpl implements InitializingBean, ApplicationContextAware,
                                            ProcessAssemble2ndService, ProcessMetadataService {
 
-    private static final Logger         logger          = LoggerFactory
+    private static final Logger           logger           = LoggerFactory
         .getLogger(ProcessAssemble2ndServiceImpl.class);
 
     /** spring context injected */
-    private ApplicationContext          applicationContext;
+    private ApplicationContext            applicationContext;
 
     /** is it necessary? consider later => template id => template cache */
-    private Map<Integer, TemplateCache> templateIdCache = new HashMap<>();
+    private Map<Integer, TemplateCache>   templateIdCache  = new HashMap<>();
 
     /** action id should be unique. action id => template cache */
-    private Map<Integer, TemplateCache> actionIdCache   = new HashMap<>();
+    private Map<Integer, TemplateCache>   actionIdCache    = new HashMap<>();
 
-    /** parent tpl cache */
-    private Set<Integer>                parentTplCache  = new HashSet<>();
+    /** parent child tpl cache */
+    private Map<Integer, List<Integer>>   parentChildCache = new HashMap<>();
+
+    /** parent_child template id => status mapping search */
+    private Map<String, StatusRefMapping> tplStatusRef     = new HashMap<>();
 
     @Override
     public void initialize(InputStream stream) {
@@ -75,10 +79,31 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
         cacheParent(xp);
 
         // parse action handlers and cache status
-        TemplateCache template = cacheTemplate(xp);
+        mappingCache(cacheTemplate(xp));
+    }
 
-        // build cache
-        mappingCache(template);
+    @Override
+    public void initStatusRef() {
+        for (Map.Entry<Integer, List<Integer>> entry : parentChildCache.entrySet()) {
+            final int pid = entry.getKey();
+            List<Integer> ids = entry.getValue();
+
+            if (CollectionUtils.isEmpty(ids)) {
+                continue;
+            }
+
+            ids.forEach(cid -> {
+                String unionKey = pid + "_" + cid;
+
+                Map<Integer, List<StatusCache>> p2c = new HashMap<>();
+                Map<Integer, Integer> c2p = new HashMap<>();
+                StatusRefMapping refMapping = new StatusRefMapping(unionKey, p2c, c2p);
+
+                // do ref mapping
+
+                tplStatusRef.put(unionKey, refMapping);
+            });
+        }
     }
 
     /**
@@ -200,8 +225,16 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
 
     private void cacheParent(XmlProcessTemplate xp) {
         int parentId = xp.getParent();
-        if (parentId > 0 && !parentTplCache.contains(parentId)) {
-            parentTplCache.add(xp.getParent());
+        int childId = xp.getId();
+        if (parentId > 0) {
+            List<Integer> children = new ArrayList<>();
+            if (parentChildCache.containsKey(parentId)) {
+                children = parentChildCache.get(parentId);
+            } else {
+                parentChildCache.put(parentId, children);
+            }
+
+            children.add(childId);
         }
     }
 
@@ -238,26 +271,6 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
         return handlerService;
     }
 
-    private <T, V> Map<T, Map<T, V>> twoKeyReflect(T key1, T key2, V value, Map<T, Map<T, V>> map) {
-        if (key1 == null || key2 == null || value == null) {
-            return map;
-        }
-
-        if (map == null) {
-            map = new HashMap<>();
-        }
-
-        if (!map.containsKey(key1)) {
-            Map<T, V> reflectMap = new HashMap<>();
-            map.put(key1, reflectMap);
-        }
-
-        Map<T, V> reflection = map.get(key1);
-        reflection.put(key2, value);
-
-        return map;
-    }
-
     @Override
     public void afterPropertiesSet() throws Exception {
         // search process template xml file
@@ -266,9 +279,12 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
             // search all template files under classpath
             Resource[] resources = resolver.getResources(TEMPLATE_PATH);
             for (Resource resource : resources) {
-                // initialize xml parse and metadata assemble
+                // 1st. initialize xml parse and metadata assemble
                 initialize(resource.getInputStream());
             }
+
+            // 2nd. refactor all parent and child status mapping
+            initStatusRef();
         } catch (Exception e) {
             LoggerUtil.error(logger, e, e.getMessage(),
                 "mission system scan classpath process template failed.");
@@ -310,6 +326,38 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
 
         // no inits
         return -1;
+    }
+
+    /**
+     * Build hashmap with double key like Map<T1, Map<T2, value>>.
+     *
+     * @param key1
+     * @param key2
+     * @param value
+     * @param map
+     * @param <T>
+     * @param <V>
+     * @return
+     */
+    private static <T, V> Map<T, Map<T, V>> twoKeyReflect(T key1, T key2, V value,
+                                                          Map<T, Map<T, V>> map) {
+        if (key1 == null || key2 == null || value == null) {
+            return map;
+        }
+
+        if (map == null) {
+            map = new HashMap<>();
+        }
+
+        if (!map.containsKey(key1)) {
+            Map<T, V> reflectMap = new HashMap<>();
+            map.put(key1, reflectMap);
+        }
+
+        Map<T, V> reflection = map.get(key1);
+        reflection.put(key2, value);
+
+        return map;
     }
 
     private List<ActionHandler> getInitializer(int templateId, int destination) {
@@ -391,7 +439,7 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
 
     @Override
     public boolean isParentTpl(int templateId) {
-        return parentTplCache.contains(templateId);
+        return parentChildCache.containsKey(templateId);
     }
 
     private ActionCache getActionCache(int actionId) {
