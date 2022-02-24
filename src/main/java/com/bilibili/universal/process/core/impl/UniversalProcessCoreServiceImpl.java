@@ -75,11 +75,11 @@ public class UniversalProcessCoreServiceImpl implements UniversalProcessCoreServ
     }
 
     @Override
-    public List<UniversalProcess> getProcessListByParentProcessNo(long parentProcessNo) {
+    public List<UniversalProcess> getProcessListByParentRefUniqueNo(long parentRefUniqueNo) {
         // build query condition
         UniversalProcessPoExample example = new UniversalProcessPoExample();
         UniversalProcessPoExample.Criteria criteria = example.or();
-        criteria.andParentProcessNoEqualTo(parentProcessNo);
+        criteria.andParentRefUniqueNoEqualTo(parentRefUniqueNo);
 
         List<UniversalProcessPo> pos = universalProcessDao.selectByExample(example);
         return CommonUtil.copyList(pos, UniversalProcess.class);

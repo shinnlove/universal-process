@@ -1,11 +1,9 @@
 package com.bilibili.universal.dao;
 
-import java.util.List;
-
-import org.apache.ibatis.annotations.Param;
-
 import com.bilibili.universal.dao.model.ProcessBlockingPo;
 import com.bilibili.universal.dao.model.ProcessBlockingPoExample;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
 
 public interface ProcessBlockingDao {
     long countByExample(ProcessBlockingPoExample example);
@@ -22,11 +20,9 @@ public interface ProcessBlockingDao {
 
     ProcessBlockingPo selectByPrimaryKey(Long id);
 
-    int updateByExampleSelective(@Param("record") ProcessBlockingPo record,
-                                 @Param("example") ProcessBlockingPoExample example);
+    int updateByExampleSelective(@Param("record") ProcessBlockingPo record, @Param("example") ProcessBlockingPoExample example);
 
-    int updateByExample(@Param("record") ProcessBlockingPo record,
-                        @Param("example") ProcessBlockingPoExample example);
+    int updateByExample(@Param("record") ProcessBlockingPo record, @Param("example") ProcessBlockingPoExample example);
 
     int updateByPrimaryKeySelective(ProcessBlockingPo record);
 

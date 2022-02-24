@@ -5,15 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProcessBlockingPoExample {
-    protected String         orderByClause;
+    protected String orderByClause;
 
-    protected boolean        distinct;
+    protected boolean distinct;
 
     protected List<Criteria> oredCriteria;
 
-    private Integer          limit;
+    private Integer limit;
 
-    private Integer          offset;
+    private Integer offset;
 
     public ProcessBlockingPoExample() {
         oredCriteria = new ArrayList<Criteria>();
@@ -118,8 +118,7 @@ public class ProcessBlockingPoExample {
             criteria.add(new Criterion(condition, value));
         }
 
-        protected void addCriterion(String condition, Object value1, Object value2,
-                                    String property) {
+        protected void addCriterion(String condition, Object value1, Object value2, String property) {
             if (value1 == null || value2 == null) {
                 throw new RuntimeException("Between values for " + property + " cannot be null");
             }
@@ -302,8 +301,7 @@ public class ProcessBlockingPoExample {
         }
 
         public Criteria andObstacleByProcessNoNotBetween(Long value1, Long value2) {
-            addCriterion("obstacle_by_process_no not between", value1, value2,
-                "obstacleByProcessNo");
+            addCriterion("obstacle_by_process_no not between", value1, value2, "obstacleByProcessNo");
             return (Criteria) this;
         }
 
@@ -636,11 +634,11 @@ public class ProcessBlockingPoExample {
     }
 
     public static class Criterion {
-        private String  condition;
+        private String condition;
 
-        private Object  value;
+        private Object value;
 
-        private Object  secondValue;
+        private Object secondValue;
 
         private boolean noValue;
 
@@ -650,7 +648,7 @@ public class ProcessBlockingPoExample {
 
         private boolean listValue;
 
-        private String  typeHandler;
+        private String typeHandler;
 
         public String getCondition() {
             return condition;
@@ -707,8 +705,7 @@ public class ProcessBlockingPoExample {
             this(condition, value, null);
         }
 
-        protected Criterion(String condition, Object value, Object secondValue,
-                            String typeHandler) {
+        protected Criterion(String condition, Object value, Object secondValue, String typeHandler) {
             super();
             this.condition = condition;
             this.value = value;

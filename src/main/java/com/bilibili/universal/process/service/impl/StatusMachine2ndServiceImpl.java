@@ -183,7 +183,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
             UniversalProcess process = lockRefProcess(refUniqueNo);
 
             int current = process.getCurrentStatus();
-            long pno = process.getParentProcessNo();
+            long pRefNo = process.getParentRefUniqueNo();
             long no = process.getProcessNo();
             context.setProcessNo(no);
 
@@ -200,15 +200,14 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
             proceedProcessStatus(templateId, actionId, no, src, dst, dataContext.getOperator(),
                 dataContext.getRemark());
 
-            if (pno > 0 && proceedParent) {
+            if (pRefNo > 0 && proceedParent) {
                 // child proceed parent
 
-                UniversalProcess pProcess = queryNoProcess(pno);
+                UniversalProcess pProcess = queryRefProcess(pRefNo);
                 int pid = pProcess.getTemplateId();
-                long pRefNo = pProcess.getRefUniqueNo();
                 int pSrc = pProcess.getCurrentStatus();
 
-                int slowest = slowestChildrenStatus(childrenNo(pno));
+                int slowest = slowestChildrenStatus(childrenRef(pRefNo));
                 int pDst = statusC2P(pid, templateId, slowest);
 
                 if (behind(pid, pSrc, pDst)) {
@@ -227,7 +226,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
             if (isParentTpl(templateId) && proceedChildren) {
                 // parent proceed child
 
-                List<UniversalProcess> children = childrenNo(no);
+                List<UniversalProcess> children = childrenRef(pRefNo);
                 children.stream().filter(c -> {
                     int cid = c.getTemplateId();
                     int cs = c.getCurrentStatus();
@@ -315,13 +314,15 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         return new BatchInitResult(pno, processNos);
     }
 
-    private void reconcileParent(long selfProcessNo, long parentProcessNo, int needReconcile,
+    @Deprecated
+    private void reconcileParent(long selfProcessNo, long parentRefUniqueNo, int needReconcile,
                                  int reconcileMode) {
         // if status reached to end, then check reconcile mode
-        if (parentProcessNo != -1 && needReconcile == 1) {
+        if (parentRefUniqueNo != -1 && needReconcile == 1) {
             // get parent process
-            UniversalProcess parentProcess = lockNoProcess(parentProcessNo);
+            UniversalProcess parentProcess = lockNoProcess(parentRefUniqueNo);
             int pTemplateId = parentProcess.getTemplateId();
+            long parentProcessNo = parentProcess.getProcessNo();
             int pActionId = -1;
             int pcStatus = parentProcess.getCurrentStatus();
 
@@ -330,7 +331,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
             if (reconcileMode == 1) {
                 // cooperate mode: get other sibling process
                 // loop to check each child process status with no lock and update parent status if ok
-                for (UniversalProcess up : siblingsByNo(parentProcessNo, selfProcessNo)) {
+                for (UniversalProcess up : siblingsByRef(parentRefUniqueNo, selfProcessNo)) {
                     int uptId = up.getTemplateId();
                     int upStatus = up.getCurrentStatus();
                     boolean isFinal = isFinalStatus(uptId, upStatus);

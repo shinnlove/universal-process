@@ -5,15 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UniversalProcessPoExample {
-    protected String         orderByClause;
+    protected String orderByClause;
 
-    protected boolean        distinct;
+    protected boolean distinct;
 
     protected List<Criteria> oredCriteria;
 
-    private Integer          limit;
+    private Integer limit;
 
-    private Integer          offset;
+    private Integer offset;
 
     public UniversalProcessPoExample() {
         oredCriteria = new ArrayList<Criteria>();
@@ -118,8 +118,7 @@ public class UniversalProcessPoExample {
             criteria.add(new Criterion(condition, value));
         }
 
-        protected void addCriterion(String condition, Object value1, Object value2,
-                                    String property) {
+        protected void addCriterion(String condition, Object value1, Object value2, String property) {
             if (value1 == null || value2 == null) {
                 throw new RuntimeException("Between values for " + property + " cannot be null");
             }
@@ -243,66 +242,6 @@ public class UniversalProcessPoExample {
 
         public Criteria andProcessNoNotBetween(Long value1, Long value2) {
             addCriterion("process_no not between", value1, value2, "processNo");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoIsNull() {
-            addCriterion("parent_process_no is null");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoIsNotNull() {
-            addCriterion("parent_process_no is not null");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoEqualTo(Long value) {
-            addCriterion("parent_process_no =", value, "parentProcessNo");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoNotEqualTo(Long value) {
-            addCriterion("parent_process_no <>", value, "parentProcessNo");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoGreaterThan(Long value) {
-            addCriterion("parent_process_no >", value, "parentProcessNo");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoGreaterThanOrEqualTo(Long value) {
-            addCriterion("parent_process_no >=", value, "parentProcessNo");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoLessThan(Long value) {
-            addCriterion("parent_process_no <", value, "parentProcessNo");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoLessThanOrEqualTo(Long value) {
-            addCriterion("parent_process_no <=", value, "parentProcessNo");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoIn(List<Long> values) {
-            addCriterion("parent_process_no in", values, "parentProcessNo");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoNotIn(List<Long> values) {
-            addCriterion("parent_process_no not in", values, "parentProcessNo");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoBetween(Long value1, Long value2) {
-            addCriterion("parent_process_no between", value1, value2, "parentProcessNo");
-            return (Criteria) this;
-        }
-
-        public Criteria andParentProcessNoNotBetween(Long value1, Long value2) {
-            addCriterion("parent_process_no not between", value1, value2, "parentProcessNo");
             return (Criteria) this;
         }
 
@@ -483,6 +422,66 @@ public class UniversalProcessPoExample {
 
         public Criteria andRefUniqueNoNotBetween(Long value1, Long value2) {
             addCriterion("ref_unique_no not between", value1, value2, "refUniqueNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoIsNull() {
+            addCriterion("parent_ref_unique_no is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoIsNotNull() {
+            addCriterion("parent_ref_unique_no is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoEqualTo(Long value) {
+            addCriterion("parent_ref_unique_no =", value, "parentRefUniqueNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoNotEqualTo(Long value) {
+            addCriterion("parent_ref_unique_no <>", value, "parentRefUniqueNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoGreaterThan(Long value) {
+            addCriterion("parent_ref_unique_no >", value, "parentRefUniqueNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoGreaterThanOrEqualTo(Long value) {
+            addCriterion("parent_ref_unique_no >=", value, "parentRefUniqueNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoLessThan(Long value) {
+            addCriterion("parent_ref_unique_no <", value, "parentRefUniqueNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoLessThanOrEqualTo(Long value) {
+            addCriterion("parent_ref_unique_no <=", value, "parentRefUniqueNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoIn(List<Long> values) {
+            addCriterion("parent_ref_unique_no in", values, "parentRefUniqueNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoNotIn(List<Long> values) {
+            addCriterion("parent_ref_unique_no not in", values, "parentRefUniqueNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoBetween(Long value1, Long value2) {
+            addCriterion("parent_ref_unique_no between", value1, value2, "parentRefUniqueNo");
+            return (Criteria) this;
+        }
+
+        public Criteria andParentRefUniqueNoNotBetween(Long value1, Long value2) {
+            addCriterion("parent_ref_unique_no not between", value1, value2, "parentRefUniqueNo");
             return (Criteria) this;
         }
 
@@ -875,11 +874,11 @@ public class UniversalProcessPoExample {
     }
 
     public static class Criterion {
-        private String  condition;
+        private String condition;
 
-        private Object  value;
+        private Object value;
 
-        private Object  secondValue;
+        private Object secondValue;
 
         private boolean noValue;
 
@@ -889,7 +888,7 @@ public class UniversalProcessPoExample {
 
         private boolean listValue;
 
-        private String  typeHandler;
+        private String typeHandler;
 
         public String getCondition() {
             return condition;
@@ -946,8 +945,7 @@ public class UniversalProcessPoExample {
             this(condition, value, null);
         }
 
-        protected Criterion(String condition, Object value, Object secondValue,
-                            String typeHandler) {
+        protected Criterion(String condition, Object value, Object secondValue, String typeHandler) {
             super();
             this.condition = condition;
             this.value = value;

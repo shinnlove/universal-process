@@ -33,8 +33,8 @@ public class UniversalProcess implements Serializable {
     /** 关联唯一业务No. */
     private Long              refUniqueNo;
 
-    /** 父流程No. */
-    private Long              parentProcessNo;
+    /** 关联父业务唯一业务No. */
+    private Long              parentRefUniqueNo;
 
     /** 当前状态 */
     private Integer           currentStatus;
@@ -91,12 +91,12 @@ public class UniversalProcess implements Serializable {
         this.refUniqueNo = refUniqueNo;
     }
 
-    public Long getParentProcessNo() {
-        return parentProcessNo;
+    public Long getParentRefUniqueNo() {
+        return parentRefUniqueNo;
     }
 
-    public void setParentProcessNo(Long parentProcessNo) {
-        this.parentProcessNo = parentProcessNo;
+    public void setParentRefUniqueNo(Long parentRefUniqueNo) {
+        this.parentRefUniqueNo = parentRefUniqueNo;
     }
 
     public Integer getCurrentStatus() {

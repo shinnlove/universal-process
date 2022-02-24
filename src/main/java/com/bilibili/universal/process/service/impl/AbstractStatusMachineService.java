@@ -109,6 +109,10 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return universalProcessCoreService.getProcessByNo(processNo);
     }
 
+    protected UniversalProcess queryRefProcess(long refUniqueNo) {
+        return universalProcessCoreService.getProcessByRefUniqueNo(refUniqueNo, false);
+    }
+
     protected void existRefProcess(long refUniqueNo) {
         UniversalProcess process = universalProcessCoreService.getProcessByRefUniqueNo(refUniqueNo,
             false);
@@ -150,16 +154,16 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return processBlockingCoreService.getBlockingByProcessNo(processNo);
     }
 
-    protected List<UniversalProcess> siblingsByNo(long parentNo, long selfNo) {
-        List<UniversalProcess> childProcesses = childrenNo(parentNo);
+    protected List<UniversalProcess> siblingsByRef(long parentRefNo, long selfNo) {
+        List<UniversalProcess> childProcesses = childrenRef(parentRefNo);
         List<UniversalProcess> otherChildProcessList = childProcesses.stream()
             .filter(t -> t.getProcessNo() != selfNo).collect(Collectors.toList());
 
         return otherChildProcessList;
     }
 
-    protected List<UniversalProcess> childrenNo(long parentNo) {
-        return universalProcessCoreService.getProcessListByParentProcessNo(parentNo);
+    protected List<UniversalProcess> childrenRef(long parentRefUniqueNo) {
+        return universalProcessCoreService.getProcessListByParentRefUniqueNo(parentRefUniqueNo);
     }
 
     protected StatusRefMapping statusRefMapping(int parentTemplateId, int childTemplateId) {

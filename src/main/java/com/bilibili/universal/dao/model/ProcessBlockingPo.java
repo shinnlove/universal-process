@@ -7,42 +7,42 @@ public class ProcessBlockingPo implements Serializable {
     /**
      * id
      */
-    private Long              id;
+    private Long id;
 
     /**
      * 主流程No.
      */
-    private Long              mainProcessNo;
+    private Long mainProcessNo;
 
     /**
      * 阻塞流程No.
      */
-    private Long              obstacleByProcessNo;
+    private Long obstacleByProcessNo;
 
     /**
      * 主流程需阻塞的状态
      */
-    private Integer           refStatus;
+    private Integer refStatus;
 
     /**
      * 流程在某状态被其他流程阻塞时提示语
      */
-    private String            blockingMessage;
+    private String blockingMessage;
 
     /**
      * 创建时间
      */
-    private Timestamp         ctime;
+    private Timestamp ctime;
 
     /**
      * 更新时间
      */
-    private Timestamp         mtime;
+    private Timestamp mtime;
 
     /**
      * 备注
      */
-    private String            remark;
+    private String remark;
 
     private static final long serialVersionUID = 1L;
 
@@ -123,20 +123,13 @@ public class ProcessBlockingPo implements Serializable {
         }
         ProcessBlockingPo other = (ProcessBlockingPo) that;
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
-               && (this.getMainProcessNo() == null ? other.getMainProcessNo() == null
-                   : this.getMainProcessNo().equals(other.getMainProcessNo()))
-               && (this.getObstacleByProcessNo() == null ? other.getObstacleByProcessNo() == null
-                   : this.getObstacleByProcessNo().equals(other.getObstacleByProcessNo()))
-               && (this.getRefStatus() == null ? other.getRefStatus() == null
-                   : this.getRefStatus().equals(other.getRefStatus()))
-               && (this.getBlockingMessage() == null ? other.getBlockingMessage() == null
-                   : this.getBlockingMessage().equals(other.getBlockingMessage()))
-               && (this.getCtime() == null ? other.getCtime() == null
-                   : this.getCtime().equals(other.getCtime()))
-               && (this.getMtime() == null ? other.getMtime() == null
-                   : this.getMtime().equals(other.getMtime()))
-               && (this.getRemark() == null ? other.getRemark() == null
-                   : this.getRemark().equals(other.getRemark()));
+            && (this.getMainProcessNo() == null ? other.getMainProcessNo() == null : this.getMainProcessNo().equals(other.getMainProcessNo()))
+            && (this.getObstacleByProcessNo() == null ? other.getObstacleByProcessNo() == null : this.getObstacleByProcessNo().equals(other.getObstacleByProcessNo()))
+            && (this.getRefStatus() == null ? other.getRefStatus() == null : this.getRefStatus().equals(other.getRefStatus()))
+            && (this.getBlockingMessage() == null ? other.getBlockingMessage() == null : this.getBlockingMessage().equals(other.getBlockingMessage()))
+            && (this.getCtime() == null ? other.getCtime() == null : this.getCtime().equals(other.getCtime()))
+            && (this.getMtime() == null ? other.getMtime() == null : this.getMtime().equals(other.getMtime()))
+            && (this.getRemark() == null ? other.getRemark() == null : this.getRemark().equals(other.getRemark()));
     }
 
     @Override
@@ -144,13 +137,10 @@ public class ProcessBlockingPo implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
-        result = prime * result
-                 + ((getMainProcessNo() == null) ? 0 : getMainProcessNo().hashCode());
-        result = prime * result
-                 + ((getObstacleByProcessNo() == null) ? 0 : getObstacleByProcessNo().hashCode());
+        result = prime * result + ((getMainProcessNo() == null) ? 0 : getMainProcessNo().hashCode());
+        result = prime * result + ((getObstacleByProcessNo() == null) ? 0 : getObstacleByProcessNo().hashCode());
         result = prime * result + ((getRefStatus() == null) ? 0 : getRefStatus().hashCode());
-        result = prime * result
-                 + ((getBlockingMessage() == null) ? 0 : getBlockingMessage().hashCode());
+        result = prime * result + ((getBlockingMessage() == null) ? 0 : getBlockingMessage().hashCode());
         result = prime * result + ((getCtime() == null) ? 0 : getCtime().hashCode());
         result = prime * result + ((getMtime() == null) ? 0 : getMtime().hashCode());
         result = prime * result + ((getRemark() == null) ? 0 : getRemark().hashCode());

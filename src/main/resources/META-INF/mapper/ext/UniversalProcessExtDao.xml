@@ -11,7 +11,7 @@
         <result column="template_id" jdbcType="INTEGER" property="templateId"/>
         <result column="process_type" jdbcType="TINYINT" property="processType"/>
         <result column="ref_unique_no" jdbcType="BIGINT" property="refUniqueNo"/>
-        <result column="parent_process_no" jdbcType="BIGINT" property="parentProcessNo"/>
+        <result column="parent_ref_unique_no" jdbcType="BIGINT" property="parentRefUniqueNo"/>
         <result column="current_status" jdbcType="TINYINT" property="currentStatus"/>
         <result column="latest_operator" jdbcType="VARCHAR" property="latestOperator"/>
         <result column="remark" jdbcType="VARCHAR" property="remark"/>
@@ -25,7 +25,7 @@
                template_id,
                process_type,
                ref_unique_no,
-               parent_process_no,
+               parent_ref_unique_no,
                current_status,
                latest_operator,
                remark,
@@ -43,7 +43,7 @@
                template_id,
                process_type,
                ref_unique_no,
-               parent_process_no,
+               parent_ref_unique_no,
                current_status,
                latest_operator,
                remark,

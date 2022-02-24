@@ -1,11 +1,9 @@
 package com.bilibili.universal.dao;
 
-import java.util.List;
-
-import org.apache.ibatis.annotations.Param;
-
 import com.bilibili.universal.dao.model.ProcessStatusLogPo;
 import com.bilibili.universal.dao.model.ProcessStatusLogPoExample;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
 
 public interface ProcessStatusLogDao {
     long countByExample(ProcessStatusLogPoExample example);
@@ -22,11 +20,9 @@ public interface ProcessStatusLogDao {
 
     ProcessStatusLogPo selectByPrimaryKey(Long id);
 
-    int updateByExampleSelective(@Param("record") ProcessStatusLogPo record,
-                                 @Param("example") ProcessStatusLogPoExample example);
+    int updateByExampleSelective(@Param("record") ProcessStatusLogPo record, @Param("example") ProcessStatusLogPoExample example);
 
-    int updateByExample(@Param("record") ProcessStatusLogPo record,
-                        @Param("example") ProcessStatusLogPoExample example);
+    int updateByExample(@Param("record") ProcessStatusLogPo record, @Param("example") ProcessStatusLogPoExample example);
 
     int updateByPrimaryKeySelective(ProcessStatusLogPo record);
 

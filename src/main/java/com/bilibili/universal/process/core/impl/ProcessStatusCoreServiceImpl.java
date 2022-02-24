@@ -40,7 +40,7 @@ public class ProcessStatusCoreServiceImpl implements ProcessStatusCoreService {
         uProcess.setProcessNo(processNo);
         uProcess.setTemplateId(templateId);
         uProcess.setRefUniqueNo(refUniqueNo);
-        uProcess.setParentProcessNo(parentRefUniqueNo);
+        uProcess.setParentRefUniqueNo(parentRefUniqueNo);
         uProcess.setCurrentStatus(destination);
         uProcess.setLatestOperator(operator);
         uProcess.setRemark(remark);

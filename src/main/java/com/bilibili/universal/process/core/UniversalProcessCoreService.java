@@ -44,10 +44,10 @@ public interface UniversalProcessCoreService {
     /**
      * Get process list by given parent process No.
      *
-     * @param parentProcessNo       the parent process No.
+     * @param parentRefUniqueNo         the parent ref unique No.
      * @return
      */
-    List<UniversalProcess> getProcessListByParentProcessNo(long parentProcessNo);
+    List<UniversalProcess> getProcessListByParentRefUniqueNo(long parentRefUniqueNo);
 
     /**
      * Get and lock one process by ref id.

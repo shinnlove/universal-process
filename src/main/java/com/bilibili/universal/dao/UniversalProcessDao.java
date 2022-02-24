@@ -1,11 +1,9 @@
 package com.bilibili.universal.dao;
 
-import java.util.List;
-
-import org.apache.ibatis.annotations.Param;
-
 import com.bilibili.universal.dao.model.UniversalProcessPo;
 import com.bilibili.universal.dao.model.UniversalProcessPoExample;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
 
 public interface UniversalProcessDao {
     long countByExample(UniversalProcessPoExample example);
@@ -22,11 +20,9 @@ public interface UniversalProcessDao {
 
     UniversalProcessPo selectByPrimaryKey(Long id);
 
-    int updateByExampleSelective(@Param("record") UniversalProcessPo record,
-                                 @Param("example") UniversalProcessPoExample example);
+    int updateByExampleSelective(@Param("record") UniversalProcessPo record, @Param("example") UniversalProcessPoExample example);
 
-    int updateByExample(@Param("record") UniversalProcessPo record,
-                        @Param("example") UniversalProcessPoExample example);
+    int updateByExample(@Param("record") UniversalProcessPo record, @Param("example") UniversalProcessPoExample example);
 
     int updateByPrimaryKeySelective(UniversalProcessPo record);
 
