@@ -183,10 +183,9 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         final ProcessContext context = buildContext(templateId, actionId, refUniqueNo, src, dst,
             dataContext);
 
-        // 6th: check current process info if process exists
         Integer r = tx(status -> {
 
-            // need to lock current process
+            // check and lock
             UniversalProcess process = lockRefProcess(refUniqueNo);
 
             int current = process.getCurrentStatus();
@@ -194,16 +193,16 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
             long no = process.getProcessNo();
             context.setProcessNo(no);
 
-            // use status flow reflection to validate state flow correct
+            // check source
             checkSourceStatus(current, src);
 
-            // check no blocking in way..
+            // no blocking in way..
             checkBlocking(no);
 
-            // real execute action's handlers
+            // handlers in the action
             execute(context, handlers(actionId, true));
 
-            // service which operates the combination of status
+            // rotate embed status
             proceedProcessStatus(templateId, actionId, no, src, dst, dataContext.getOperator(),
                 dataContext.getRemark());
 
@@ -218,11 +217,11 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                 int pDst = statusC2P(pid, templateId, slowest);
 
                 if (behind(pid, pSrc, pDst)) {
-                    // need proceed scenario
+                    // behind should be proceeded!
 
                     int aid = appropriateAction(pid, pSrc, pDst);
                     if (aid > 0) {
-                        // special warning: cascade proceed parent, never proceed any children!
+                        // Special Warning: cascade proceed parent, never proceed any children in reverse!
                         DataContext d = new DataContext(chooseParentParam(cache, context, pid));
                         ProcessContext pc = proceedProcess(aid, pRefNo, d, true, false);
                         context.parent(pc);
@@ -248,7 +247,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                     });
             }
 
-            // give a change for business codes to execute outta logic, 
+            // give a chance for business codes to execute outta logic, 
             // Special Warning: this callback must be after recursive proceed!
             if (callback != null) {
                 callback.accept(context);
