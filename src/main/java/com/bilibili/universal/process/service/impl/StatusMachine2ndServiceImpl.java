@@ -109,7 +109,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
             dataContext);
 
         // fast query once to check if it's a new process
-        existRefProcess(refUniqueNo);
+        notExistRefProcess(refUniqueNo);
 
         final long pno = nextId();
 
