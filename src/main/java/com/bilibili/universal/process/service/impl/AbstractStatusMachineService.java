@@ -112,7 +112,7 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
     protected UniversalProcess existRefProcess(long refUniqueNo) {
         UniversalProcess process = universalProcessCoreService.getProcessByRefUniqueNo(refUniqueNo,
             false);
-        AssertUtil.isNull(process);
+        AssertUtil.isNotNull(process);
         return process;
     }
 
