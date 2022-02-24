@@ -28,6 +28,7 @@ import com.bilibili.universal.process.model.cache.TemplateCache;
 import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
+import com.bilibili.universal.process.model.status.StatusRefMapping;
 import com.bilibili.universal.process.no.SnowflakeIdWorker;
 import com.bilibili.universal.process.service.ActionExecutor;
 import com.bilibili.universal.process.service.ProcessMetadataService;
@@ -154,6 +155,10 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
 
     protected List<UniversalProcess> childrenNo(long parentNo) {
         return universalProcessCoreService.getProcessListByParentProcessNo(parentNo);
+    }
+
+    protected StatusRefMapping statusRefMapping(int parentTemplateId, int childTemplateId) {
+        return processMetadataService.getRefStatusMapping(parentTemplateId, childTemplateId);
     }
 
     protected int getACStatus(int templateId) {

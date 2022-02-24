@@ -11,9 +11,12 @@ import org.springframework.util.CollectionUtils;
 
 import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.cache.ActionCache;
+import com.bilibili.universal.process.model.cache.StatusCache;
 import com.bilibili.universal.process.model.cache.TemplateCache;
+import com.bilibili.universal.process.model.cache.TemplateMetadata;
 import com.bilibili.universal.process.model.cascade.PrepareParent;
 import com.bilibili.universal.process.model.context.ProcessContext;
+import com.bilibili.universal.process.model.status.StatusRefMapping;
 
 /**
  * <p>
@@ -79,17 +82,69 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         }
     }
 
-    protected int chooseChildAction(int childTemplateId, int source, int destination) {
+    protected int nearestChildAction(int childTemplateId, int childStatus, int parentSource,
+                                     int parentDestination) {
+        int actionId = -1;
+
         TemplateCache cache = getCache(childTemplateId);
         Map<Integer, Map<Integer, ActionCache>> childActionDst = cache.getActionTable();
 
-        return -1;
+        // no target action id
+        if (CollectionUtils.isEmpty(childActionDst)) {
+            return actionId;
+        }
+
+        TemplateMetadata metadata = cache.getMetadata();
+        int parentTemplateId = metadata.getParentId();
+
+        StatusRefMapping refMapping = statusRefMapping(parentTemplateId, childTemplateId);
+        if (refMapping == null) {
+            return actionId;
+        }
+
+        Map<Integer, List<StatusCache>> p2cMapping = refMapping.getParent2Child();
+        if (!p2cMapping.containsKey(parentDestination)) {
+            return actionId;
+        }
+
+        int targetDst = -1;
+        List<StatusCache> childrenDst = p2cMapping.get(parentDestination);
+        if (!CollectionUtils.isEmpty(childrenDst)) {
+            StatusCache sc = childrenDst.get(0);
+            targetDst = sc.getNo();
+        }
+
+        // not found or no mapping action..
+        if (targetDst <= 0 || !childActionDst.containsKey(targetDst)
+            || !childActionDst.get(targetDst).containsKey(childStatus)) {
+            return actionId;
+        }
+
+        Map<Integer, ActionCache> targets = childActionDst.get(targetDst);
+        ActionCache targetAction = targets.get(childStatus);
+
+        return targetAction.getActionId();
     }
 
     protected Object chooseChildParam(ActionCache cache, ProcessContext context) {
         // parent no need to prepare for children since it has multiple children
         // just fetch last handler's result for child process
         return lastHandlerResult(cache, context);
+    }
+
+    protected boolean inParentRefStatus(int parentTemplateId, int parentStatus, int childTemplateId,
+                                        int childStatus) {
+        StatusRefMapping refMapping = statusRefMapping(parentTemplateId, childTemplateId);
+        Map<Integer, List<StatusCache>> childrenRef = refMapping.getParent2Child();
+        List<StatusCache> childrenStatus = childrenRef.get(parentStatus);
+
+        for (StatusCache sc : childrenStatus) {
+            if (sc.getNo() == childStatus) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }

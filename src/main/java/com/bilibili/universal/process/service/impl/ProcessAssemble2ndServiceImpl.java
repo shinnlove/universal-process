@@ -109,6 +109,11 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
                     int no = s.getNo();
                     int pno = s.getPs();
 
+                    // for robust.. -1 represents non-initialized
+                    if (no == -1 || pno == -1) {
+                        continue;
+                    }
+
                     // 1st. build child to parent
                     c2p.put(no, pno);
 
@@ -350,6 +355,68 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
         return -1;
     }
 
+    @SuppressWarnings("rawtypes")
+    @Override
+    public List<ActionHandler> getExecutions(int actionId, boolean sync) {
+        ActionCache action = getActionCache(actionId);
+        if (sync) {
+            return action.getSyncHandlers();
+        } else {
+            return action.getAsyncHandlers();
+        }
+    }
+
+    @Override
+    public boolean isFinalStatus(int templateId, int status) {
+        TemplateCache cache = getTemplateById(templateId);
+        if (cache == null || CollectionUtils.isEmpty(cache.getDstTable())) {
+            return false;
+        }
+
+        Map<Integer, Map<Integer, StatusPair>> table = cache.getDstTable();
+        for (Map.Entry<Integer, Map<Integer, StatusPair>> entry : table.entrySet()) {
+            Map<Integer, StatusPair> dst = entry.getValue();
+            if (dst.containsKey(status)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public int getACStatus(int templateId) {
+        TemplateCache cache = getTemplateById(templateId);
+        if (cache == null || cache.getStatusArray().length == 0) {
+            return -1;
+        }
+
+        StatusCache[] statusCaches = cache.getStatusArray();
+        for (int i = 0; i < statusCaches.length; i++) {
+            if (statusCaches[i].getAccomplish() == 1) {
+                return statusCaches[i].getNo();
+            }
+        }
+
+        return -1;
+    }
+
+    @Override
+    public boolean isParentTpl(int templateId) {
+        return parentChildCache.containsKey(templateId);
+    }
+
+    @Override
+    public StatusRefMapping getRefStatusMapping(int parentTemplateId, int childTemplateId) {
+        return tplStatusRef.get(unionKey(parentTemplateId, childTemplateId));
+    }
+
+    private ActionCache getActionCache(int actionId) {
+        TemplateCache cache = actionIdCache.get(actionId);
+        Map<Integer, ActionCache> actions = cache.getActions();
+        return actions.get(actionId);
+    }
+
     /**
      * Build hashmap with double key like Map<T1, Map<T2, value>>.
      *
@@ -415,63 +482,6 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
         }
 
         return triggers.get(type);
-    }
-
-    @SuppressWarnings("rawtypes")
-    @Override
-    public List<ActionHandler> getExecutions(int actionId, boolean sync) {
-        ActionCache action = getActionCache(actionId);
-        if (sync) {
-            return action.getSyncHandlers();
-        } else {
-            return action.getAsyncHandlers();
-        }
-    }
-
-    @Override
-    public boolean isFinalStatus(int templateId, int status) {
-        TemplateCache cache = getTemplateById(templateId);
-        if (cache == null || CollectionUtils.isEmpty(cache.getDstTable())) {
-            return false;
-        }
-
-        Map<Integer, Map<Integer, StatusPair>> table = cache.getDstTable();
-        for (Map.Entry<Integer, Map<Integer, StatusPair>> entry : table.entrySet()) {
-            Map<Integer, StatusPair> dst = entry.getValue();
-            if (dst.containsKey(status)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    @Override
-    public int getACStatus(int templateId) {
-        TemplateCache cache = getTemplateById(templateId);
-        if (cache == null || cache.getStatusArray().length == 0) {
-            return -1;
-        }
-
-        StatusCache[] statusCaches = cache.getStatusArray();
-        for (int i = 0; i < statusCaches.length; i++) {
-            if (statusCaches[i].getAccomplish() == 1) {
-                return statusCaches[i].getNo();
-            }
-        }
-
-        return -1;
-    }
-
-    @Override
-    public boolean isParentTpl(int templateId) {
-        return parentChildCache.containsKey(templateId);
-    }
-
-    private ActionCache getActionCache(int actionId) {
-        TemplateCache cache = actionIdCache.get(actionId);
-        Map<Integer, ActionCache> actions = cache.getActions();
-        return actions.get(actionId);
     }
 
 }

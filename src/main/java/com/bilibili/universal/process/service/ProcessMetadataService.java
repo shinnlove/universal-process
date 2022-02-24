@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.cache.TemplateCache;
+import com.bilibili.universal.process.model.status.StatusRefMapping;
 
 /**
  * @author Tony Zhao
@@ -44,5 +45,7 @@ public interface ProcessMetadataService {
     int getACStatus(int templateId);
 
     boolean isParentTpl(int templateId);
+
+    StatusRefMapping getRefStatusMapping(int parentTemplateId, int childTemplateId);
 
 }

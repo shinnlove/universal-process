@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -225,37 +224,33 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                 // parent proceed child
 
                 List<UniversalProcess> children = childrenNo(no);
+                children.stream().filter(c -> {
+                    int cid = c.getTemplateId();
+                    int cs = c.getCurrentStatus();
 
-                // filter => children2
-                List<UniversalProcess> needs = children.stream().filter(p -> {
-
-                    if (p.getCurrentStatus() != src) {
-                        // todo: search child mapping, src is from parent!
-                        return false;
+                    // search parent 2 child mapping
+                    if (inParentRefStatus(templateId, src, cid, cs)) {
+                        return true;
                     }
+                    return false;
+                }).forEach(c -> {
+                    // search action id for proceeding
+                    int cid = c.getTemplateId();
+                    long cRefNo = c.getRefUniqueNo();
+                    int cs = c.getCurrentStatus();
 
-                    return true;
-
-                }).collect(Collectors.toList());
-
-                // children2 forEach search ActionId
-
-                needs.forEach(n -> {
-                    long nRefNo = n.getRefUniqueNo();
-                    int ntId = n.getTemplateId();
-                    int nActionId = chooseChildAction(ntId, src, dst);
-                    if (nActionId > 0) {
+                    int cActionId = nearestChildAction(cid, cs, src, dst);
+                    if (cActionId > 0) {
                         Object cParam = chooseChildParam(cache, context);
                         DataContext d = new DataContext(cParam);
 
                         // special warning: cascade proceed appropriate children, never proceed any parent!
-                        ProcessContext nc = proceedProcess(nActionId, nRefNo, d, false, true);
+                        ProcessContext nc = proceedProcess(cActionId, cRefNo, d, false, true);
                         LoggerUtil.info(logger, "successfully proceed children, nContext=", nc);
 
                         context.children(nc);
                     }
                 });
-
             }
 
             // give a change for business codes to execute outta logic, 
