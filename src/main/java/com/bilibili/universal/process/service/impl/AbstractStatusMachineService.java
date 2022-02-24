@@ -238,7 +238,7 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
 
     protected void checkSourceStatus(int currentStatus, int source) {
         // -1 represents universal status.
-        if (currentStatus != source && source != -1) {
+        if (source != -1 && currentStatus != source) {
             throw new SystemException(SystemResultCode.PARAM_INVALID,
                 MachineConstant.SOURCE_STATUS_INCORRECT);
         }

@@ -16,6 +16,7 @@ import com.bilibili.universal.process.model.cache.TemplateCache;
 import com.bilibili.universal.process.model.cache.TemplateMetadata;
 import com.bilibili.universal.process.model.cascade.PrepareParent;
 import com.bilibili.universal.process.model.context.ProcessContext;
+import com.bilibili.universal.process.model.process.UniversalProcess;
 import com.bilibili.universal.process.model.status.StatusRefMapping;
 
 /**
@@ -57,18 +58,23 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
     }
 
     protected int chooseParentAction(int parentTemplateId, int source, int destination) {
-        // todo: here 
+        int actionId = -1;
         TemplateCache cache = getCache(parentTemplateId);
+
+        // no target action id
         Map<Integer, Map<Integer, ActionCache>> parentActionDst = cache.getActionTable();
-        if (parentActionDst.containsKey(destination)) {
-            Map<Integer, ActionCache> dstMapping = parentActionDst.get(destination);
-            if (dstMapping.containsKey(source)) {
-                ActionCache dstAction = dstMapping.get(source);
-                // parent revising action id
-                return dstAction.getActionId();
-            }
+        if (CollectionUtils.isEmpty(parentActionDst) || !parentActionDst.containsKey(destination)) {
+            return actionId;
         }
-        return -1;
+
+        Map<Integer, ActionCache> dstMapping = parentActionDst.get(destination);
+        if (CollectionUtils.isEmpty(dstMapping) || !dstMapping.containsKey(source)) {
+            return actionId;
+        }
+
+        // target parent action id
+        ActionCache dstAction = dstMapping.get(source);
+        return dstAction.getActionId();
     }
 
     protected Object chooseParentParam(ActionCache cache, ProcessContext context,
@@ -80,6 +86,35 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         } else {
             return lastHandlerResult(cache, context);
         }
+    }
+
+    protected int slowestChildrenStatus(List<UniversalProcess> children) {
+        int min = -1;
+
+        if (CollectionUtils.isEmpty(children)) {
+            return min;
+        }
+
+        UniversalProcess process = children.get(0);
+        int id = process.getTemplateId();
+        TemplateCache cache = getCache(id);
+        StatusCache[] arr = cache.getStatusArray();
+
+        if (arr.length <= 0) {
+            return min;
+        }
+
+        min = getStatusSequence(arr, process.getCurrentStatus());
+
+        for (UniversalProcess c : children) {
+            int cs = c.getCurrentStatus();
+            int seq = getStatusSequence(arr, cs);
+            if (seq < min) {
+                min = seq;
+            }
+        }
+
+        return getStatusNo(arr, min);
     }
 
     protected int nearestChildAction(int childTemplateId, int childStatus, int parentSource,
@@ -142,6 +177,55 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
             if (sc.getNo() == childStatus) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    protected int getStatusSequence(StatusCache[] arr, int status) {
+        for (int i = 0; i < arr.length; i++) {
+            if (status == arr[i].getNo()) {
+                return arr[i].getSequence();
+            }
+        }
+        return -1;
+    }
+
+    protected int getStatusNo(StatusCache[] arr, int sequence) {
+        for (int i = 0; i < arr.length; i++) {
+            if (sequence == arr[i].getSequence()) {
+                return arr[i].getNo();
+            }
+        }
+        return -1;
+    }
+
+    protected int statusC2P(int parentTemplateId, int childTemplateId, int childStatus) {
+        int mappingStatus = -1;
+
+        StatusRefMapping refMapping = statusRefMapping(parentTemplateId, childTemplateId);
+        if (refMapping == null) {
+            return mappingStatus;
+        }
+
+        Map<Integer, Integer> c2p = refMapping.getChild2parent();
+        if (c2p.containsKey(childStatus)) {
+            return c2p.get(childStatus);
+        }
+
+        return mappingStatus;
+    }
+
+    protected boolean behind(int templateId, int former, int latter) {
+        TemplateCache cache = getCache(templateId);
+        StatusCache[] arr = cache.getStatusArray();
+
+        int formerSeq = getStatusSequence(arr, former);
+        int latterSeq = getStatusSequence(arr, latter);
+
+        // behind means smaller than sequence
+        if (formerSeq < latterSeq) {
+            return true;
         }
 
         return false;

@@ -27,7 +27,6 @@ import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
 import com.bilibili.universal.process.util.TplUtil;
 import com.bilibili.universal.util.common.AssertUtil;
-import com.bilibili.universal.util.log.LoggerUtil;
 
 /**
  * @author Tony Zhao
@@ -205,18 +204,23 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                 // child proceed parent
 
                 UniversalProcess pProcess = queryNoProcess(pno);
+                int pid = pProcess.getTemplateId();
                 long pRefNo = pProcess.getRefUniqueNo();
-                int ptId = pProcess.getTemplateId();
-                int pActionId = chooseParentAction(ptId, src, dst);
-                if (pActionId > 0) {
-                    Object pParam = chooseParentParam(cache, context, ptId);
-                    DataContext d = new DataContext(pParam);
+                int pSrc = pProcess.getCurrentStatus();
 
-                    // special warning: cascade proceed parent, never proceed any children!
-                    ProcessContext pc = proceedProcess(pActionId, pRefNo, d, true, false);
-                    LoggerUtil.info(logger, "successfully proceed parent, pContext=", pc);
+                int slowest = slowestChildrenStatus(childrenNo(pno));
+                int pDst = statusC2P(pid, templateId, slowest);
 
-                    context.parent(pc);
+                if (behind(pid, pSrc, pDst)) {
+                    // need proceed scenario
+
+                    int pActionId = chooseParentAction(pid, pSrc, pDst);
+                    if (pActionId > 0) {
+                        // special warning: cascade proceed parent, never proceed any children!
+                        DataContext d = new DataContext(chooseParentParam(cache, context, pid));
+                        ProcessContext pc = proceedProcess(pActionId, pRefNo, d, true, false);
+                        context.parent(pc);
+                    }
                 }
             }
 
@@ -241,14 +245,10 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
 
                     int cActionId = nearestChildAction(cid, cs, src, dst);
                     if (cActionId > 0) {
-                        Object cParam = chooseChildParam(cache, context);
-                        DataContext d = new DataContext(cParam);
-
                         // special warning: cascade proceed appropriate children, never proceed any parent!
-                        ProcessContext nc = proceedProcess(cActionId, cRefNo, d, false, true);
-                        LoggerUtil.info(logger, "successfully proceed children, nContext=", nc);
-
-                        context.children(nc);
+                        DataContext d = new DataContext(chooseChildParam(cache, context));
+                        ProcessContext cc = proceedProcess(cActionId, cRefNo, d, false, true);
+                        context.children(cc);
                     }
                 });
             }
