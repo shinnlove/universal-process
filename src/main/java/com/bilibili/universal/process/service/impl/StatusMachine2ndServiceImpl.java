@@ -267,6 +267,9 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         // At last, execute async handlers outta transaction!
         runAsync(() -> execute(context, handlers(actionId, false)));
 
+        // triggers
+        runAsync(() -> execute(context, triggers(actionId)));
+
         return context;
     }
 

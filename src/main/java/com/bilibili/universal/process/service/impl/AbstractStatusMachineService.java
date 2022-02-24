@@ -4,7 +4,9 @@
  */
 package com.bilibili.universal.process.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
@@ -22,8 +24,11 @@ import com.bilibili.universal.process.consts.MachineConstant;
 import com.bilibili.universal.process.core.ProcessBlockingCoreService;
 import com.bilibili.universal.process.core.ProcessStatusCoreService;
 import com.bilibili.universal.process.core.UniversalProcessCoreService;
+import com.bilibili.universal.process.enums.TemplateTriggerType;
 import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.blocking.ProcessBlocking;
+import com.bilibili.universal.process.model.cache.ActionCache;
+import com.bilibili.universal.process.model.cache.StatusCache;
 import com.bilibili.universal.process.model.cache.TemplateCache;
 import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
@@ -103,6 +108,30 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
 
     protected List<ActionHandler> handlers(int actionId, boolean isSync) {
         return processMetadataService.getExecutions(actionId, isSync);
+    }
+
+    protected List<ActionHandler> triggers(int actionId) {
+        TemplateCache template = getTpl(actionId);
+        Map<String, List<ActionHandler>> triggers = template.getTriggers();
+        Map<Integer, ActionCache> actionMap = template.getActions();
+        ActionCache cache = actionMap.get(actionId);
+
+        StatusCache[] arr = template.getStatusArray();
+        for (int i = 0; i < arr.length; i++) {
+            StatusCache sc = arr[i];
+            if (sc.getNo() == cache.getDestination()) {
+                int type = sc.getAccomplish();
+                if (type > 0) {
+                    String typeName = TemplateTriggerType.getNameByCode(type);
+                    if (typeName != null && triggers.containsKey(typeName)) {
+                        return triggers.get(typeName);
+                    }
+                }
+                break;
+            }
+        }
+
+        return new ArrayList<>();
     }
 
     protected UniversalProcess queryNoProcess(long processNo) {
