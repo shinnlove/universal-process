@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public class PipelineServiceImpl implements PipelineService {
 
     /** pipeline executor. */
     @Resource
-    @Qualifier("processPool")
+    @Qualifier("pipelinePool")
     private ExecutorService        executor;
 
     /** process template and status metadata autowired service */
@@ -45,15 +46,26 @@ public class PipelineServiceImpl implements PipelineService {
     private ProcessMetadataService processMetadataService;
 
     @Override
-    public Object doPipeline(int actionId) {
-        // prepare data context
-        DataContext<String> dataContext = new DataContext<>("This is a input parameter.");
+    public Object doPipeline(int actionId, DataContext dataContext) {
+        return doPipeline(actionId, dataContext, resp -> {
+        });
+    }
+
+    @Override
+    public Object doPipeline(int actionId, DataContext dataContext,
+                             Consumer<ProcessContext> callback) {
         ProcessContext<String> context = new ProcessContext<>(dataContext);
 
         // prepare handlers
         List<ActionHandler> syncHandlers = processMetadataService.getExecutions(actionId, true);
 
-        return execute(context, syncHandlers);
+        execute(context, syncHandlers);
+
+        if (callback != null) {
+            callback.accept(context);
+        }
+
+        return context;
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

@@ -52,6 +52,11 @@ public class TrackingThreadPoolConfig {
         return ThreadUtils.createPool(MACHINE_THREAD_POOL_NAME, MACHINE_THREAD_POOL_NUM);
     }
 
+    @Bean("pipelinePool")
+    public ExecutorService initPipelinePool() {
+        return ThreadUtils.createPool(PIPELINE_THREAD_POOL_NAME, PIPELINE_THREAD_POOL_NUM);
+    }
+
     /**
      * DIY notification dispatch thread pool.
      *
