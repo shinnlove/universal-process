@@ -25,6 +25,9 @@ public class StatusCache implements Serializable, Comparable<StatusCache> {
     /** status sort order */
     private int               sequence         = -1;
 
+    /** reflect parent status no */
+    private int               ps               = -1;
+
     /** indicate whether status is normal accomplished */
     private int               accomplish       = 0;
 
@@ -38,16 +41,31 @@ public class StatusCache implements Serializable, Comparable<StatusCache> {
     }
 
     /**
+     * Constructor with basic parameters.
+     * 
+     * @param no 
+     * @param sequence
+     * @param ps
+     */
+    public StatusCache(int no, int sequence, int ps) {
+        this.no = no;
+        this.sequence = sequence;
+        this.ps = ps;
+    }
+
+    /**
      * Constructor with all arguments.
      * 
      * @param no 
      * @param sequence
+     * @param ps
      * @param accomplish
      * @param defaultDst
      */
-    public StatusCache(int no, int sequence, int accomplish, boolean defaultDst) {
+    public StatusCache(int no, int sequence, int ps, int accomplish, boolean defaultDst) {
         this.no = no;
         this.sequence = sequence;
+        this.ps = ps;
         this.accomplish = accomplish;
         this.defaultDst = defaultDst;
     }
@@ -66,6 +84,14 @@ public class StatusCache implements Serializable, Comparable<StatusCache> {
 
     public void setSequence(int sequence) {
         this.sequence = sequence;
+    }
+
+    public int getPs() {
+        return ps;
+    }
+
+    public void setPs(int ps) {
+        this.ps = ps;
     }
 
     public int getAccomplish() {

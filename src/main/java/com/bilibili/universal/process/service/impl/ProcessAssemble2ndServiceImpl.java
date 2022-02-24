@@ -5,6 +5,7 @@
 package com.bilibili.universal.process.service.impl;
 
 import static com.bilibili.universal.process.consts.XmlParseConstant.TEMPLATE_PATH;
+import static com.bilibili.universal.process.consts.XmlParseConstant.UNDERSCORE;
 
 import java.io.InputStream;
 import java.util.*;
@@ -93,13 +94,34 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
             }
 
             ids.forEach(cid -> {
-                String unionKey = pid + "_" + cid;
+                String unionKey = unionKey(pid, cid);
 
                 Map<Integer, List<StatusCache>> p2c = new HashMap<>();
                 Map<Integer, Integer> c2p = new HashMap<>();
                 StatusRefMapping refMapping = new StatusRefMapping(unionKey, p2c, c2p);
 
+                TemplateCache child = getTemplateById(cid);
+                StatusCache[] status = child.getStatusArray();
+
                 // do ref mapping
+                for (int i = 0; i < status.length; i++) {
+                    StatusCache s = status[i];
+                    int no = s.getNo();
+                    int pno = s.getPs();
+
+                    // 1st. build child to parent
+                    c2p.put(no, pno);
+
+                    List<StatusCache> childStatus = new ArrayList<>();
+                    if (p2c.containsKey(pno)) {
+                        childStatus = p2c.get(pno);
+                    } else {
+                        // 2nd. build parent to children
+                        p2c.put(pno, childStatus);
+                    }
+
+                    childStatus.add(s);
+                }
 
                 tplStatusRef.put(unionKey, refMapping);
             });
@@ -178,8 +200,8 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
         // step2: status check array
         List<StatusCache> statusCache = new ArrayList<>();
         for (XmlProcessStatus s : xp.getStatus()) {
-            statusCache
-                .add(new StatusCache(s.getNo(), s.getSequence(), s.getAc(), s.isDefaultDst()));
+            statusCache.add(new StatusCache(s.getNo(), s.getSequence(), s.getPs(), s.getAc(),
+                s.isDefaultDst()));
         }
 
         if (CollectionUtils.isEmpty(statusCache)) {
@@ -358,6 +380,10 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
         reflection.put(key2, value);
 
         return map;
+    }
+
+    private static String unionKey(int parentTemplateId, int childTemplateId) {
+        return parentTemplateId + UNDERSCORE + childTemplateId;
     }
 
     private List<ActionHandler> getInitializer(int templateId, int destination) {
