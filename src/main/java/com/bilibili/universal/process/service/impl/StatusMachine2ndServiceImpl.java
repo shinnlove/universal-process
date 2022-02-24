@@ -264,10 +264,8 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
 
         AssertUtil.largeThanValue(r, 0);
 
-        // At last, execute async handlers outta transaction!
+        // At last, execute async handlers and triggers outta transaction!
         runAsync(() -> execute(context, handlers(actionId, false)));
-
-        // triggers
         runAsync(() -> execute(context, triggers(actionId)));
 
         return context;
