@@ -82,27 +82,17 @@ public class XmlTemplateParser {
         // a single status node created
         XmlProcessStatus xs = new XmlProcessStatus();
 
-        xs.setNo(Integer.parseInt(attr.get(ATTR_NO)));
-        xs.setSequence(Integer.parseInt(attr.get(ATTR_SEQUENCE)));
-        xs.setName(attr.get(ATTR_NAME));
-        xs.setDesc(attr.get(ATTR_DESC));
-
-        String ps = attr.get(ATTR_PARENT_STATUS);
-        if (ps == null) {
-            xs.setPs(-1);
-        } else {
-            xs.setPs(Integer.parseInt(ps));
-        }
+        xs.setNo(getValue(attr, ATTR_NO, -1));
+        xs.setSequence(getValue(attr, ATTR_SEQUENCE, -1));
+        xs.setName(getValue(attr, ATTR_NAME, EMPTY));
+        xs.setDesc(getValue(attr, ATTR_DESC, EMPTY));
+        xs.setPs(getValue(attr, ATTR_PARENT_STATUS, -1));
 
         // indicate which status is normal accomplish
-        String acTag = attr.get(ATTR_ACCOMPLISH);
-        int ac = acTag == null ? 0 : Integer.parseInt(acTag);
-        xs.setAc(ac);
+        xs.setAc(getValue(attr, ATTR_ACCOMPLISH, 0));
 
         // parse default dst
-        String defaultDst = attr.get(ATTR_DEFAULT);
-        boolean dd = defaultDst == null ? false : Boolean.parseBoolean(defaultDst);
-        xs.setDefaultDst(dd);
+        xs.setDefaultDst(getValue(attr, ATTR_DEFAULT, false));
 
         return xs;
     }
@@ -171,15 +161,16 @@ public class XmlTemplateParser {
                                                 List<XmlProcessHandler> handlers) {
         XmlProcessAction xa = new XmlProcessAction();
 
+        // id should not duplicate!!
         xa.setId(Integer.parseInt(attr.get(ATTR_ID)));
-        xa.setName(attr.get(ATTR_NAME));
-        xa.setDesc(attr.get(ATTR_DESC));
-        xa.setEntrance(Boolean.parseBoolean(attr.get(ATTR_ENTRANCE)));
 
-        int source = attr.get(ATTR_SOURCE) == null ? -1 : Integer.parseInt(attr.get(ATTR_SOURCE));
-        xa.setSource(source);
+        xa.setName(getValue(attr, ATTR_NAME, EMPTY));
+        xa.setDesc(getValue(attr, ATTR_DESC, EMPTY));
+        xa.setEntrance(getValue(attr, ATTR_ENTRANCE, false));
 
-        xa.setDestination(Integer.parseInt(attr.get(ATTR_DESTINATION)));
+        xa.setSource(getValue(attr, ATTR_SOURCE, -1));
+        xa.setDestination(getValue(attr, ATTR_DESTINATION, -1));
+
         xa.setHandlers(handlers);
 
         return xa;
@@ -212,19 +203,15 @@ public class XmlTemplateParser {
         // a new handler created...
         XmlProcessHandler xh = new XmlProcessHandler();
 
-        xh.setSequence(Integer.parseInt(attr.get(ATTR_SEQUENCE)));
-        xh.setRefBeanId(attr.get(ATTR_REFERENCE));
-        xh.setDesc(attr.get(ATTR_DESC));
+        xh.setSequence(getValue(attr, ATTR_SEQUENCE, 1));
+        xh.setRefBeanId(getValue(attr, ATTR_REFERENCE, EMPTY));
+        xh.setDesc(getValue(attr, ATTR_DESC, EMPTY));
 
         // parse handler transaction
-        String trans = attr.get(ATTR_TRANS);
-        boolean isTrans = trans == null || Boolean.parseBoolean(trans);
-        xh.setTrans(isTrans);
+        xh.setTrans(getValue(attr, ATTR_TRANS, true));
 
         // parse prepare parameter for next process's template id
-        String prepare = attr.get(ATTR_PREPARE);
-        Integer prepareId = prepare == null ? -1 : Integer.parseInt(prepare);
-        xh.setPrepareId(prepareId);
+        xh.setPrepareId(getValue(attr, ATTR_PREPARE, -1));
 
         return xh;
     }
@@ -303,18 +290,40 @@ public class XmlTemplateParser {
         xp.setDesc(attr.get(ATTR_DESC));
 
         // parentId
-        int parentId = attr.get(ATTR_PARENT) == null ? -1 : Integer.parseInt(attr.get(ATTR_PARENT));
-        xp.setParent(parentId);
+        xp.setParent(getValue(attr, ATTR_PARENT, -1));
 
         // reconcile 0 represents no reconcile
-        int reconcile = attr.get(ATTR_RECONCILE) == null ? 0
-            : Integer.parseInt(attr.get(ATTR_RECONCILE));
-        xp.setReconcile(reconcile);
+        xp.setReconcile(getValue(attr, ATTR_RECONCILE, 0));
 
         // coordinate 1 represents and &&
-        int coordinate = attr.get(ATTR_COORDINATE) == null ? 1
-            : Integer.parseInt(attr.get(ATTR_COORDINATE));
-        xp.setCoordinate(coordinate);
+        xp.setCoordinate(getValue(attr, ATTR_COORDINATE, 1));
+    }
+
+    private static boolean getValue(Map<String, String> attr, String key, boolean defaultValue) {
+        if (attr.containsKey(key)) {
+            String value = attr.get(key);
+            return value == null ? defaultValue : Boolean.parseBoolean(value);
+        }
+
+        return defaultValue;
+    }
+
+    private static int getValue(Map<String, String> attr, String key, int defaultValue) {
+        if (attr.containsKey(key)) {
+            String value = attr.get(key);
+            return value == null ? defaultValue : Integer.parseInt(value);
+        }
+
+        return defaultValue;
+    }
+
+    private static String getValue(Map<String, String> attr, String key, String defaultValue) {
+        if (attr.containsKey(key)) {
+            String value = attr.get(key);
+            return value == null ? defaultValue : value;
+        }
+
+        return defaultValue;
     }
 
 }

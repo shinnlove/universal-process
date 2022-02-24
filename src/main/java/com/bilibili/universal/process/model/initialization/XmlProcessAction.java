@@ -30,6 +30,7 @@ public class XmlProcessAction implements Serializable {
     private String                  desc;
 
     /** whether this action is an entrance, reject proceed if no process and not an entrance */
+    @Deprecated
     private boolean                 entrance;
 
     /** action from status */
@@ -103,6 +104,7 @@ public class XmlProcessAction implements Serializable {
         return entrance;
     }
 
+    @Deprecated
     public void setEntrance(boolean entrance) {
         this.entrance = entrance;
     }

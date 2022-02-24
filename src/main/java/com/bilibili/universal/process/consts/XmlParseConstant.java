@@ -16,6 +16,8 @@ public final class XmlParseConstant {
         // no constructor
     }
 
+    public static final String EMPTY                     = "";
+
     public static final String TEMPLATE_PATH             = "classpath:META-INF/process/*.xml";
 
     public static final String SECTION_ROOT_METADATA     = "metadata";
