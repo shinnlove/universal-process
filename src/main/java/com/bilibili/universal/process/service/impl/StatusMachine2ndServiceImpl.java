@@ -226,7 +226,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
             if (isParentTpl(templateId) && proceedChildren) {
                 // parent proceed child
 
-                List<UniversalProcess> children = childrenRef(pRefNo);
+                List<UniversalProcess> children = childrenRef(refUniqueNo);
                 children.stream().filter(c -> {
                     int cid = c.getTemplateId();
                     int cs = c.getCurrentStatus();
