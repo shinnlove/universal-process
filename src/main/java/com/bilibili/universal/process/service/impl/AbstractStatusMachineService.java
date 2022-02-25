@@ -7,6 +7,7 @@ package com.bilibili.universal.process.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
@@ -270,6 +271,11 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         context.setRefUniqueNo(refUniqueNo);
         context.setSourceStatus(source);
         context.setDestinationStatus(destination);
+
+        // prevent NPE
+        if (Objects.nonNull(dataContext)) {
+            dataContext = new DataContext();
+        }
         context.setDataContext(dataContext);
         return context;
     }

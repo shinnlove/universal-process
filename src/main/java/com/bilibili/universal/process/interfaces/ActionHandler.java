@@ -7,6 +7,7 @@ package com.bilibili.universal.process.interfaces;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
@@ -98,18 +99,19 @@ public interface ActionHandler<T, R> extends BaseHandler {
      * @param x     the process context
      */
     default void doProcess(ActionChain c, ProcessContext<T> x) {
-
-        Object data = x.getDataContext().getData();
-        Class<?> dataClass = data.getClass();
         Class<?> handlerType = paramType();
+        Object data = x.getDataContext().getData();
 
-        if (!dataClass.isAssignableFrom(handlerType)) {
-            // search for inner type
-            for (Field f : dataClass.getDeclaredFields()) {
-                Class<?> cls = f.getType();
-                if (!isBasicType(cls) && cls.isAssignableFrom(handlerType)) {
-                    data = fValue(data, f);
-                    break;
+        if (Objects.nonNull(data)) {
+            Class<?> dataClass = data.getClass();
+            if (!dataClass.isAssignableFrom(handlerType)) {
+                // search for inner type
+                for (Field f : dataClass.getDeclaredFields()) {
+                    Class<?> cls = f.getType();
+                    if (!isBasicType(cls) && cls.isAssignableFrom(handlerType)) {
+                        data = fValue(data, f);
+                        break;
+                    }
                 }
             }
         }
