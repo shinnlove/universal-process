@@ -163,10 +163,6 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return process;
     }
 
-    protected UniversalProcess lockNoProcess(long processNo) {
-        return universalProcessCoreService.lockProcessByProcessNo(processNo);
-    }
-
     protected long createProcess(int templateId, int actionId, long processNo, long refUniqueNo,
                                  long parentRefUniqueNo, int source, int destination,
                                  String operator, String remark) {
@@ -200,10 +196,6 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return processMetadataService.getRefStatusMapping(parentTemplateId, childTemplateId);
     }
 
-    protected int getACStatus(int templateId) {
-        return processMetadataService.getACStatus(templateId);
-    }
-
     protected boolean isFinalStatus(int templateId, int status) {
         return processMetadataService.isFinalStatus(templateId, status);
     }
@@ -234,6 +226,7 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         } // if blocking
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     protected void execute(final ProcessContext context,
                            final List<ActionHandler> handlers) throws SystemException {
         // real execute action's handlers
@@ -258,11 +251,13 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return snowflakeIdWorker.nextId();
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     protected ProcessContext buildContext(int templateId, long refUniqueNo, int source,
                                           int destination, DataContext dataContext) {
         return buildContext(templateId, -1, refUniqueNo, source, destination, dataContext);
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     protected ProcessContext buildContext(int templateId, int actionId, long refUniqueNo,
                                           int source, int destination, DataContext dataContext) {
         ProcessContext context = new ProcessContext();
@@ -273,7 +268,7 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         context.setDestinationStatus(destination);
 
         // prevent NPE
-        if (Objects.nonNull(dataContext)) {
+        if (Objects.isNull(dataContext)) {
             dataContext = new DataContext();
         }
         context.setDataContext(dataContext);
