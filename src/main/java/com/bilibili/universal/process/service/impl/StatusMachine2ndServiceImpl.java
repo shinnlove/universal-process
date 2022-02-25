@@ -22,6 +22,7 @@ import com.bilibili.universal.process.model.cache.TemplateMetadata;
 import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
+import com.bilibili.universal.process.model.status.DragStatusId;
 import com.bilibili.universal.process.util.TplUtil;
 import com.bilibili.universal.util.common.AssertUtil;
 
@@ -214,8 +215,9 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                 int pid = pProcess.getTemplateId();
                 int pSrc = pProcess.getCurrentStatus();
 
-                int slowest = slowestChildrenStatus(refChildren(pRefNo));
-                int pDst = statusC2P(pid, templateId, slowest);
+                DragStatusId slowest = slowestChildrenStatus(refChildren(pRefNo));
+                // VIP: pls use slowest template id and its current status do ref mapping!!
+                int pDst = statusC2P(pid, slowest.getTid(), slowest.getStatus());
 
                 if (behind(pid, pSrc, pDst)) {
                     // behind should be proceeded!

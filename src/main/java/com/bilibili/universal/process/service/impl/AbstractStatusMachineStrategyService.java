@@ -18,6 +18,7 @@ import com.bilibili.universal.process.model.cache.TemplateCache;
 import com.bilibili.universal.process.model.cascade.PrepareParent;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
+import com.bilibili.universal.process.model.status.DragStatusId;
 import com.bilibili.universal.process.model.status.StatusRefMapping;
 
 /**
@@ -93,33 +94,43 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         }
     }
 
-    protected int slowestChildrenStatus(List<UniversalProcess> children) {
-        int min = -1;
+    protected DragStatusId slowestChildrenStatus(List<UniversalProcess> children) {
+        DragStatusId drag = new DragStatusId(-1, -1);
 
         if (CollectionUtils.isEmpty(children)) {
-            return min;
+            return drag;
         }
 
         UniversalProcess process = children.get(0);
         int id = process.getTemplateId();
+        int current = process.getCurrentStatus();
+
         TemplateCache cache = getCache(id);
         StatusCache[] arr = cache.getStatusArray();
 
         if (arr.length <= 0) {
-            return min;
+            return drag;
         }
 
-        min = getStatusSequence(arr, process.getCurrentStatus());
+        // init
+        drag.setStatus(current);
+        drag.setTid(id);
 
+        int min = getStatusSequence(arr, current);
         for (UniversalProcess c : children) {
             int cs = c.getCurrentStatus();
             int seq = getStatusSequence(arr, cs);
             if (seq < min) {
                 min = seq;
+
+                // VIP: refresh slowest status and its template id! ×3
+                drag.setStatus(cs);
+                drag.setTid(c.getTemplateId());
+                break;
             }
         }
 
-        return getStatusNo(arr, min);
+        return drag;
     }
 
     protected int nearestAction(int parentTemplateId, int parentDestination, int childTemplateId,
