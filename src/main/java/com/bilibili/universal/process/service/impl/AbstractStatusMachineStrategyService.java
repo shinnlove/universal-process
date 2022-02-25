@@ -52,6 +52,10 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
     private Object lastHandlerResult(ActionCache cache, ProcessContext context) {
         // use default if not exist
         List<ActionHandler> syncHandlers = cache.getSyncHandlers();
+        if (CollectionUtils.isEmpty(syncHandlers)) {
+            return null;
+        }
+
         int size = syncHandlers.size();
         ActionHandler h = syncHandlers.get(size - 1);
         String name = h.getClass().getName();
