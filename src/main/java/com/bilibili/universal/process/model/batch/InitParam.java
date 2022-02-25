@@ -21,13 +21,13 @@ public class InitParam implements Serializable {
     private static final long serialVersionUID = -4923194334467690991L;
 
     @RequiredParam
-    private int               templateId;
+    private int               templateId       = -1;
 
     @RequiredParam
     private long              refUniqueNo;
 
     @RequiredParam
-    private DataContext       dataContext;
+    private DataContext       dataContext      = new DataContext();
 
     public InitParam() {
     }

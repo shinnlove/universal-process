@@ -27,7 +27,7 @@ public class BatchInitParam implements Serializable {
     private long              parentRefUniqueNo = -1;
 
     @RequiredParam
-    private DataContext       parentDataContext;
+    private DataContext       parentDataContext = new DataContext();
 
     @RequiredParam
     private List<InitParam>   params;
