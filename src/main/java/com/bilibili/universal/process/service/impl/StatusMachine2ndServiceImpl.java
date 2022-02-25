@@ -208,8 +208,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                 dataContext.getRemark());
 
             if (proceedParent && pRefNo > 0) {
-                // slowest child will proceed parent
-                // Special Warning: parent dst status will be the newest slowest child
+                // slowest child will proceed parent whose dst follows with the newest slowest child
 
                 UniversalProcess pProcess = queryRefProcess(pRefNo);
                 int pid = pProcess.getTemplateId();
@@ -220,7 +219,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                 int pDst = statusC2P(pid, slowest.getTid(), slowest.getStatus());
 
                 if (behind(pid, pSrc, pDst)) {
-                    // behind should be proceeded!
+                    // really behind should be proceeded!
 
                     int aid = appropriateAction(pid, pSrc, pDst);
                     if (aid > 0) {
@@ -238,7 +237,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                 refChildren(refUniqueNo).stream().filter(
                     c -> behindRefStatus(templateId, dst, c.getTemplateId(), c.getCurrentStatus()))
                     .forEach(c -> {
-                        // search nearest action id in status graph for proceeding
+                        // loop to the end for searching nearest action id in status graph for proceeding
                         int aid = nearestAction(templateId, dst, c.getTemplateId(),
                             c.getCurrentStatus());
                         if (aid > 0) {
