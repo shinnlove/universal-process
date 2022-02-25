@@ -232,10 +232,11 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
             if (isParentTpl(templateId) && proceedChildren) {
                 // parent could proceed appropriate children
 
-                refChildren(refUniqueNo).stream().filter(c -> inParentRefStatus(templateId, src,
-                    c.getTemplateId(), c.getCurrentStatus())).forEach(c -> {
+                refChildren(refUniqueNo).stream().filter(
+                    c -> behindRefStatus(templateId, src, c.getTemplateId(), c.getCurrentStatus()))
+                    .forEach(c -> {
                         // search nearest action id in status graph for proceeding
-                        int aid = nearestAction(c.getTemplateId(), c.getCurrentStatus(), src, dst);
+                        int aid = nearestAction(c.getTemplateId(), c.getCurrentStatus(), dst);
                         if (aid > 0) {
                             long cRefNo = c.getRefUniqueNo();
                             DataContext d = new DataContext(chooseChildParam(cache, context));
