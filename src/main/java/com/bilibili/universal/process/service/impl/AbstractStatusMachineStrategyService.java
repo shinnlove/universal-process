@@ -15,7 +15,6 @@ import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.cache.ActionCache;
 import com.bilibili.universal.process.model.cache.StatusCache;
 import com.bilibili.universal.process.model.cache.TemplateCache;
-import com.bilibili.universal.process.model.cache.TemplateMetadata;
 import com.bilibili.universal.process.model.cascade.PrepareParent;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
@@ -119,18 +118,39 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         return getStatusNo(arr, min);
     }
 
-    protected int nearestAction(int childTemplateId, int childStatus, int parentDestination) {
+    protected int nearestAction(int parentTemplateId, int parentDestination, int childTemplateId,
+                                int childStatus) {
+        TemplateCache parent = getCache(parentTemplateId);
+        // it's initialized in order
+        StatusCache[] arr = parent.getStatusArray();
+        int startSeq = getStatusSequence(arr, parentDestination);
+
+        for (int i = 0; i < arr.length; i++) {
+            if (startSeq <= arr[i].getSequence()) {
+                int aid = searchNearestOnce(parentTemplateId, arr[i].getNo(), childTemplateId,
+                    childStatus);
+                if (aid > 0) {
+                    return aid;
+                }
+            }
+        }
+
+        // till end still no match nodes, we forgive proceed..
+        return -1;
+    }
+
+    protected int searchNearestOnce(int parentTemplateId, int parentDestination,
+                                    int childTemplateId, int childStatus) {
         int actionId = -1;
 
         TemplateCache template = getCache(childTemplateId);
         Map<Integer, Map<Integer, ActionCache>> childDstRoute = template.getActionTable();
         if (CollectionUtils.isEmpty(childDstRoute)) {
+            // template has no action is a wrong case!
             // VIP1: no need to proceed this process since child has no route to dst 
             return actionId;
         }
 
-        TemplateMetadata metadata = template.getMetadata();
-        int parentTemplateId = metadata.getParentId();
         StatusRefMapping refMapping = statusRefMapping(parentTemplateId, childTemplateId);
         if (refMapping == null) {
             return actionId;
@@ -138,9 +158,11 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
 
         Map<Integer, List<StatusCache>> p2cMapping = refMapping.getParent2Child();
         if (CollectionUtils.isEmpty(p2cMapping) || !p2cMapping.containsKey(parentDestination)) {
-            // VIP2: no need to proceed this process since child has no refer status to parent
             return actionId;
         }
+
+        // do search nearest
+        // VIP2: no need to proceed this process since child has no refer status to parent
 
         // keep in order again
         List<StatusCache> childrenDst = p2cMapping.get(parentDestination);
@@ -194,24 +216,15 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
             return false;
         }
 
-        Map<Integer, List<StatusCache>> childrenRef = refMapping.getParent2Child();
-        if (CollectionUtils.isEmpty(childrenRef)) {
+        Map<Integer, Integer> parentRef = refMapping.getChild2parent();
+        if (CollectionUtils.isEmpty(parentRef)) {
             return false;
         }
 
-        List<StatusCache> childrenStatus = childrenRef.get(parentStatus);
-        if (CollectionUtils.isEmpty(childrenStatus)) {
-            return false;
-        }
-
-        // select the minimum status in parent ref
-        Collections.sort(childrenStatus);
-
-        StatusCache s = childrenStatus.get(0);
-        int min = s.getNo();
+        int childRefInParentStatus = parentRef.get(childStatus);
 
         // judge whether current status is behind current parent ref minimum status
-        return behind(childTemplateId, childStatus, min);
+        return behind(parentTemplateId, childRefInParentStatus, parentStatus);
     }
 
     protected int getStatusSequence(StatusCache[] arr, int status) {
