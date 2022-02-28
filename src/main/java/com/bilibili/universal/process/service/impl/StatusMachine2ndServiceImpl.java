@@ -134,6 +134,8 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
 
         AssertUtil.largeThanValue(processId, 0);
 
+        runAsync(() -> execute(context, triggers(templateId, destination)));
+
         return pno;
     }
 

@@ -118,9 +118,23 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         ActionCache cache = actionMap.get(actionId);
 
         StatusCache[] arr = template.getStatusArray();
+
+        return getTriggers(arr, cache.getDestination(), triggers);
+    }
+
+    protected List<ActionHandler> triggers(int templateId, int status) {
+        TemplateCache template = getCache(templateId);
+        Map<String, List<ActionHandler>> triggers = template.getTriggers();
+        StatusCache[] arr = template.getStatusArray();
+
+        return getTriggers(arr, status, triggers);
+    }
+
+    private List<ActionHandler> getTriggers(StatusCache[] arr, int status,
+                                            Map<String, List<ActionHandler>> triggers) {
         for (int i = 0; i < arr.length; i++) {
             StatusCache sc = arr[i];
-            if (sc.getNo() == cache.getDestination()) {
+            if (sc.getNo() == status) {
                 int type = sc.getAccomplish();
                 if (type > 0) {
                     String typeName = TemplateTriggerType.getNameByCode(type);
