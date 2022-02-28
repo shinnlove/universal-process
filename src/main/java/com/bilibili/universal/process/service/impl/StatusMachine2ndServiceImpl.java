@@ -134,7 +134,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
 
         AssertUtil.largeThanValue(processId, 0);
 
-        runAsync(() -> execute(context, triggers(templateId, destination)));
+        runAsync(context, triggers(templateId, destination));
 
         return pno;
     }
@@ -266,8 +266,8 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         AssertUtil.largeThanValue(r, 0);
 
         // At last, execute async handlers and triggers outta transaction!
-        runAsync(() -> execute(context, handlers(actionId, false)));
-        runAsync(() -> execute(context, triggers(actionId)));
+        runAsync(context, handlers(actionId, false));
+        runAsync(context, triggers(actionId));
 
         return context;
     }

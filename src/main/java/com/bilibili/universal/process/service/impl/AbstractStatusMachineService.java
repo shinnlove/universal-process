@@ -257,8 +257,10 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return transactionTemplate.execute(status -> function.apply(status));
     }
 
-    protected void runAsync(Runnable r) {
-        CompletableFuture.runAsync(r, asyncExecutor);
+    protected void runAsync(final ProcessContext context, final List<ActionHandler> handlers) {
+        if (!CollectionUtils.isEmpty(handlers)) {
+            CompletableFuture.runAsync(() -> execute(context, handlers), asyncExecutor);
+        }
     }
 
     protected long nextId() {
