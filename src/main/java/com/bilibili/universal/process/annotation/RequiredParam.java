@@ -10,6 +10,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * The parameter must be required, not missing. 
+ * 
  * @author Tony Zhao
  * @version $Id: RequiredParam.java, v 0.1 2022-02-22 11:44 AM Tony Zhao Exp $$
  */

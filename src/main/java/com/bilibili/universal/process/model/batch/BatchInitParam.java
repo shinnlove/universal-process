@@ -5,6 +5,7 @@
 package com.bilibili.universal.process.model.batch;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -30,7 +31,7 @@ public class BatchInitParam implements Serializable {
     private DataContext       parentDataContext = new DataContext();
 
     @RequiredParam
-    private List<InitParam>   params;
+    private List<InitParam>   params            = new ArrayList<>();
 
     /**
      * Constructor for reflect.

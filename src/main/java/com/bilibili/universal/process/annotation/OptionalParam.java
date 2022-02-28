@@ -10,6 +10,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * The parameter is optional, will not validate.
+ * 
  * @author Tony Zhao
  * @version $Id: OptionalParam.java, v 0.1 2022-02-22 11:44 AM Tony Zhao Exp $$
  */

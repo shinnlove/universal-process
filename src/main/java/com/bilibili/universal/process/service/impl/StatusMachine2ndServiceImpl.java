@@ -304,12 +304,22 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                 int id = i.getTemplateId();
                 long cRefNo = i.getRefUniqueNo();
                 DataContext cd = i.getDataContext();
+                long no;
 
-                long no = initProcess(id, cRefNo, pno, cd);
+                if (i.getDst() > 0) {
+                    no = initProcess(id, i.getDst(), cRefNo, pno, cd);
+                } else {
+                    no = initProcess(id, cRefNo, pno, cd);
+                }
+
                 processNos.put(id, no);
             });
 
-            return initProcess(ptId, pno, pData);
+            DragStatusId slowest = slowestChildrenStatus(refChildren(pno));
+            // VIP: pls use slowest template id and its current status do ref mapping!!
+            int dst = statusC2P(ptId, slowest.getTid(), slowest.getStatus());
+
+            return initProcess(ptId, dst, pno, pData);
         });
 
         return new BatchInitResult(pno, processNos);
