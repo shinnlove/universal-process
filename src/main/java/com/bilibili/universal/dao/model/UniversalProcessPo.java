@@ -40,12 +40,17 @@ public class UniversalProcessPo implements Serializable {
     private Integer currentStatus;
 
     /**
-     * 最后操作人id, -1-代表系统
+     * 最后操作人type, 流程操作人类型
+     */
+    private Integer latestOperatorType;
+
+    /**
+     * 流程操作人id, 最后操作人id
      */
     private Long latestOperatorId;
 
     /**
-     * 最后操作人
+     * 流程操作人名称, 最后操作人name
      */
     private String latestOperator;
 
@@ -122,6 +127,14 @@ public class UniversalProcessPo implements Serializable {
         this.currentStatus = currentStatus;
     }
 
+    public Integer getLatestOperatorType() {
+        return latestOperatorType;
+    }
+
+    public void setLatestOperatorType(Integer latestOperatorType) {
+        this.latestOperatorType = latestOperatorType;
+    }
+
     public Long getLatestOperatorId() {
         return latestOperatorId;
     }
@@ -181,6 +194,7 @@ public class UniversalProcessPo implements Serializable {
             && (this.getRefUniqueNo() == null ? other.getRefUniqueNo() == null : this.getRefUniqueNo().equals(other.getRefUniqueNo()))
             && (this.getParentRefUniqueNo() == null ? other.getParentRefUniqueNo() == null : this.getParentRefUniqueNo().equals(other.getParentRefUniqueNo()))
             && (this.getCurrentStatus() == null ? other.getCurrentStatus() == null : this.getCurrentStatus().equals(other.getCurrentStatus()))
+            && (this.getLatestOperatorType() == null ? other.getLatestOperatorType() == null : this.getLatestOperatorType().equals(other.getLatestOperatorType()))
             && (this.getLatestOperatorId() == null ? other.getLatestOperatorId() == null : this.getLatestOperatorId().equals(other.getLatestOperatorId()))
             && (this.getLatestOperator() == null ? other.getLatestOperator() == null : this.getLatestOperator().equals(other.getLatestOperator()))
             && (this.getCtime() == null ? other.getCtime() == null : this.getCtime().equals(other.getCtime()))
@@ -199,6 +213,7 @@ public class UniversalProcessPo implements Serializable {
         result = prime * result + ((getRefUniqueNo() == null) ? 0 : getRefUniqueNo().hashCode());
         result = prime * result + ((getParentRefUniqueNo() == null) ? 0 : getParentRefUniqueNo().hashCode());
         result = prime * result + ((getCurrentStatus() == null) ? 0 : getCurrentStatus().hashCode());
+        result = prime * result + ((getLatestOperatorType() == null) ? 0 : getLatestOperatorType().hashCode());
         result = prime * result + ((getLatestOperatorId() == null) ? 0 : getLatestOperatorId().hashCode());
         result = prime * result + ((getLatestOperator() == null) ? 0 : getLatestOperator().hashCode());
         result = prime * result + ((getCtime() == null) ? 0 : getCtime().hashCode());
@@ -220,6 +235,7 @@ public class UniversalProcessPo implements Serializable {
         sb.append(", refUniqueNo=").append(refUniqueNo);
         sb.append(", parentRefUniqueNo=").append(parentRefUniqueNo);
         sb.append(", currentStatus=").append(currentStatus);
+        sb.append(", latestOperatorType=").append(latestOperatorType);
         sb.append(", latestOperatorId=").append(latestOperatorId);
         sb.append(", latestOperator=").append(latestOperator);
         sb.append(", ctime=").append(ctime);

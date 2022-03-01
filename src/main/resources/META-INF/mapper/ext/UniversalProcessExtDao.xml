@@ -8,15 +8,17 @@
         -->
         <id column="id" jdbcType="BIGINT" property="id"/>
         <result column="process_no" jdbcType="BIGINT" property="processNo"/>
-        <result column="template_id" jdbcType="INTEGER" property="templateId"/>
         <result column="process_type" jdbcType="TINYINT" property="processType"/>
+        <result column="template_id" jdbcType="INTEGER" property="templateId"/>
         <result column="ref_unique_no" jdbcType="BIGINT" property="refUniqueNo"/>
         <result column="parent_ref_unique_no" jdbcType="BIGINT" property="parentRefUniqueNo"/>
         <result column="current_status" jdbcType="TINYINT" property="currentStatus"/>
+        <result column="latest_operator_type" jdbcType="TINYINT" property="latestOperatorType"/>
+        <result column="latest_operator_id" jdbcType="BIGINT" property="latestOperatorId"/>
         <result column="latest_operator" jdbcType="VARCHAR" property="latestOperator"/>
-        <result column="remark" jdbcType="VARCHAR" property="remark"/>
         <result column="ctime" jdbcType="TIMESTAMP" property="ctime"/>
         <result column="mtime" jdbcType="TIMESTAMP" property="mtime"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
     </resultMap>
 
     <select id="selectByProcessNoForUpdate" resultMap="BaseResultMap">

@@ -545,6 +545,66 @@ public class UniversalProcessPoExample {
             return (Criteria) this;
         }
 
+        public Criteria andLatestOperatorTypeIsNull() {
+            addCriterion("latest_operator_type is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestOperatorTypeIsNotNull() {
+            addCriterion("latest_operator_type is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestOperatorTypeEqualTo(Integer value) {
+            addCriterion("latest_operator_type =", value, "latestOperatorType");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestOperatorTypeNotEqualTo(Integer value) {
+            addCriterion("latest_operator_type <>", value, "latestOperatorType");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestOperatorTypeGreaterThan(Integer value) {
+            addCriterion("latest_operator_type >", value, "latestOperatorType");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestOperatorTypeGreaterThanOrEqualTo(Integer value) {
+            addCriterion("latest_operator_type >=", value, "latestOperatorType");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestOperatorTypeLessThan(Integer value) {
+            addCriterion("latest_operator_type <", value, "latestOperatorType");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestOperatorTypeLessThanOrEqualTo(Integer value) {
+            addCriterion("latest_operator_type <=", value, "latestOperatorType");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestOperatorTypeIn(List<Integer> values) {
+            addCriterion("latest_operator_type in", values, "latestOperatorType");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestOperatorTypeNotIn(List<Integer> values) {
+            addCriterion("latest_operator_type not in", values, "latestOperatorType");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestOperatorTypeBetween(Integer value1, Integer value2) {
+            addCriterion("latest_operator_type between", value1, value2, "latestOperatorType");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestOperatorTypeNotBetween(Integer value1, Integer value2) {
+            addCriterion("latest_operator_type not between", value1, value2, "latestOperatorType");
+            return (Criteria) this;
+        }
+
         public Criteria andLatestOperatorIdIsNull() {
             addCriterion("latest_operator_id is null");
             return (Criteria) this;
