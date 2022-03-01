@@ -177,17 +177,19 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return process;
     }
 
-    protected long createProcess(int templateId, int actionId, long processNo, long refUniqueNo,
+    protected long createProcess(int templateId, long processNo, long refUniqueNo,
                                  long parentRefUniqueNo, int source, int destination,
-                                 String operator, String remark) {
-        return processStatusCoreService.createProcessWithStatus(templateId, actionId, processNo,
-            refUniqueNo, parentRefUniqueNo, source, destination, operator, remark);
+                                 int operatorType, long operatorId, String operator,
+                                 String remark) {
+        return processStatusCoreService.createProcessWithStatus(templateId, processNo, refUniqueNo,
+            parentRefUniqueNo, source, destination, operatorType, operatorId, operator, remark);
     }
 
     protected long proceedProcessStatus(int templateId, int actionId, long processNo, int source,
-                                        int destination, String operator, String remark) {
+                                        int destination, int operatorType, long operatorId,
+                                        String operator, String remark) {
         return processStatusCoreService.proceedProcessStatus(templateId, actionId, processNo,
-            source, destination, operator, remark);
+            source, destination, operatorType, operatorId, operator, remark);
     }
 
     protected List<ProcessBlocking> blockingByNo(long processNo) {

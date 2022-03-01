@@ -17,19 +17,21 @@ import com.bilibili.universal.process.model.log.ProcessStatusLog;
 public interface ProcessStatusCoreService {
 
     /**
-     * @param templateId
-     * @param actionId
+     * @param templateId        
      * @param processNo
      * @param refUniqueNo
+     * @param parentRefUniqueNo
      * @param source
      * @param destination
+     * @param operatorType
+     * @param operatorId
      * @param operator
      * @param remark
      * @return
      */
-    long createProcessWithStatus(int templateId, int actionId, long processNo, long refUniqueNo,
-                                 long parentRefUniqueNo,
-                                 int source, int destination, String operator, String remark);
+    long createProcessWithStatus(int templateId, long processNo, long refUniqueNo,
+                                 long parentRefUniqueNo, int source, int destination,
+                                 int operatorType, long operatorId, String operator, String remark);
 
     /**
      * Atomic proceed action of process to update given process No.'s status with logging in status log.
@@ -44,7 +46,8 @@ public interface ProcessStatusCoreService {
      * @return                  database primary id of status log
      */
     long proceedProcessStatus(int templateId, int actionId, long processNo, int source,
-                              int destination, String operator, String remark);
+                              int destination, int operatorType, long operatorId, String operator,
+                              String remark);
 
     /**
      * Get process status logs by given reference unique bussiness No.

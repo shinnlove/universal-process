@@ -16,9 +16,13 @@ public final class MachineConstant {
 
     public static final String INVALID_PARAMETERS          = "invalid parameters.";
 
+    public static final int    DEFAULT_OPERATOR_TYPE       = -1;
+
+    public static final int    DEFAULT_OPERATOR_ID         = -1;
+
     public static final String DEFAULT_OPERATOR            = "CommercialOrder System";
 
-    public static final String DEFAULT_REMARK              = "Auto reconcile by child process accomplished.";
+    public static final String DEFAULT_REMARK              = "System delegate to initialize or proceed the process.";
 
     public static final String NO_PROCESS_IN_SYSTEM        = "不存在对应的业务流程";
 

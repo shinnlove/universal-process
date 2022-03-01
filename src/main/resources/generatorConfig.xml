@@ -61,23 +61,23 @@
             <generatedKey column="id" sqlStatement="MySql" identity="true"/>
         </table>
 
-        <table tableName="process_status_metadata" domainObjectName="ProcessStatusMetadataPo"
-               mapperName="ProcessStatusMetadataDao">
-            <!-- 自动生成primary key 并返回-->
-            <generatedKey column="id" sqlStatement="MySql" identity="true"/>
-        </table>
+        <!--        <table tableName="process_status_metadata" domainObjectName="ProcessStatusMetadataPo"-->
+        <!--               mapperName="ProcessStatusMetadataDao">-->
+        <!--            &lt;!&ndash; 自动生成primary key 并返回&ndash;&gt;-->
+        <!--            <generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+        <!--        </table>-->
 
-        <table tableName="process_action_metadata" domainObjectName="ProcessActionMetadataPo"
-               mapperName="ProcessActionMetadataDao">
-            <!-- 自动生成primary key 并返回-->
-            <generatedKey column="id" sqlStatement="MySql" identity="true"/>
-        </table>
+        <!--        <table tableName="process_action_metadata" domainObjectName="ProcessActionMetadataPo"-->
+        <!--               mapperName="ProcessActionMetadataDao">-->
+        <!--            &lt;!&ndash; 自动生成primary key 并返回&ndash;&gt;-->
+        <!--            <generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+        <!--        </table>-->
 
-        <table tableName="process_template_metadata" domainObjectName="ProcessTemplateMetadataPo"
-               mapperName="ProcessTemplateMetadataDao">
-            <!-- 自动生成primary key 并返回-->
-            <generatedKey column="id" sqlStatement="MySql" identity="true"/>
-        </table>
+        <!--        <table tableName="process_template_metadata" domainObjectName="ProcessTemplateMetadataPo"-->
+        <!--               mapperName="ProcessTemplateMetadataDao">-->
+        <!--            &lt;!&ndash; 自动生成primary key 并返回&ndash;&gt;-->
+        <!--            <generatedKey column="id" sqlStatement="MySql" identity="true"/>-->
+        <!--        </table>-->
 
     </context>
 </generatorConfiguration>

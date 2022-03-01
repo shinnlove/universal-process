@@ -11,12 +11,14 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
+ * 通用流程状态模型。
+ *
  * @author Tony Zhao
  * @version $Id: UniversalProcess.java, v 0.1 2022-01-10 11:28 PM Tony Zhao Exp $$
  */
 public class UniversalProcess implements Serializable {
 
-    private static final long serialVersionUID = -5116285023457567012L;
+    private static final long serialVersionUID = -5363082981325138763L;
 
     /** id */
     private Long              id;
@@ -24,11 +26,11 @@ public class UniversalProcess implements Serializable {
     /** 流程编号 */
     private Long              processNo;
 
-    /** 模版id */
-    private Integer           templateId;
-
     /** 流程所属业务: 1-悬赏任务 */
     private Integer           processType;
+
+    /** 模版id */
+    private Integer           templateId;
 
     /** 关联唯一业务No. */
     private Long              refUniqueNo;
@@ -39,17 +41,49 @@ public class UniversalProcess implements Serializable {
     /** 当前状态 */
     private Integer           currentStatus;
 
+    /** 最后一次操作人类型 */
+    private Integer           latestOperatorType;
+
+    /** 最后一次操作人类型 */
+    private Long              latestOperatorId;
+
     /** 最后操作人 */
     private String            latestOperator;
-
-    /** 备注 */
-    private String            remark;
 
     /** 创建时间 */
     private Timestamp         ctime;
 
     /** 更新时间 */
     private Timestamp         mtime;
+
+    /** 备注 */
+    private String            remark;
+
+    /**
+     * Constructor for reflect.
+     */
+    public UniversalProcess() {
+    }
+
+    public UniversalProcess(Long id, Long processNo, Integer processType, Integer templateId,
+                            Long refUniqueNo, Long parentRefUniqueNo, Integer currentStatus,
+                            Integer latestOperatorType, Long latestOperatorId,
+                            String latestOperator, Timestamp ctime, Timestamp mtime,
+                            String remark) {
+        this.id = id;
+        this.processNo = processNo;
+        this.processType = processType;
+        this.templateId = templateId;
+        this.refUniqueNo = refUniqueNo;
+        this.parentRefUniqueNo = parentRefUniqueNo;
+        this.currentStatus = currentStatus;
+        this.latestOperatorType = latestOperatorType;
+        this.latestOperatorId = latestOperatorId;
+        this.latestOperator = latestOperator;
+        this.ctime = ctime;
+        this.mtime = mtime;
+        this.remark = remark;
+    }
 
     public Long getId() {
         return id;
@@ -67,20 +101,20 @@ public class UniversalProcess implements Serializable {
         this.processNo = processNo;
     }
 
-    public Integer getTemplateId() {
-        return templateId;
-    }
-
-    public void setTemplateId(Integer templateId) {
-        this.templateId = templateId;
-    }
-
     public Integer getProcessType() {
         return processType;
     }
 
     public void setProcessType(Integer processType) {
         this.processType = processType;
+    }
+
+    public Integer getTemplateId() {
+        return templateId;
+    }
+
+    public void setTemplateId(Integer templateId) {
+        this.templateId = templateId;
     }
 
     public Long getRefUniqueNo() {
@@ -107,20 +141,28 @@ public class UniversalProcess implements Serializable {
         this.currentStatus = currentStatus;
     }
 
+    public Integer getLatestOperatorType() {
+        return latestOperatorType;
+    }
+
+    public void setLatestOperatorType(Integer latestOperatorType) {
+        this.latestOperatorType = latestOperatorType;
+    }
+
+    public Long getLatestOperatorId() {
+        return latestOperatorId;
+    }
+
+    public void setLatestOperatorId(Long latestOperatorId) {
+        this.latestOperatorId = latestOperatorId;
+    }
+
     public String getLatestOperator() {
         return latestOperator;
     }
 
     public void setLatestOperator(String latestOperator) {
         this.latestOperator = latestOperator;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
     }
 
     public Timestamp getCtime() {
@@ -137,6 +179,14 @@ public class UniversalProcess implements Serializable {
 
     public void setMtime(Timestamp mtime) {
         this.mtime = mtime;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     @Override

@@ -4,6 +4,8 @@
  */
 package com.bilibili.universal.process.model.context;
 
+import static com.bilibili.universal.process.consts.MachineConstant.*;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,11 +41,17 @@ public class DataContext<T> implements Serializable {
     @Deprecated
     private Map<String, Object> handlerResult    = new HashMap<>();
 
+    /** the process proceed operator type */
+    private int                 operatorType     = DEFAULT_OPERATOR_TYPE;
+
+    /** the process proceed operator id */
+    private long                operatorId       = DEFAULT_OPERATOR_ID;
+
     /** the process proceed operator and default is system. */
-    private String              operator         = "Mission System";
+    private String              operator         = DEFAULT_OPERATOR;
 
     /** The remark each process need to comment. */
-    private String              remark           = "System delegate to proceed the process";
+    private String              remark           = DEFAULT_REMARK;
 
     /**
      * Constructor for reflect.
@@ -62,15 +70,18 @@ public class DataContext<T> implements Serializable {
 
     /**
      * Constructor for all arguments.
-     *
-     * @param data
+     * 
+     * @param data 
      * @param handlerResult
+     * @param operatorId
      * @param operator
      * @param remark
      */
-    public DataContext(T data, Map<String, Object> handlerResult, String operator, String remark) {
+    public DataContext(T data, Map<String, Object> handlerResult, long operatorId, String operator,
+                       String remark) {
         this.data = data;
         this.handlerResult = handlerResult;
+        this.operatorId = operatorId;
         this.operator = operator;
         this.remark = remark;
     }
@@ -81,6 +92,30 @@ public class DataContext<T> implements Serializable {
 
     public void setData(T data) {
         this.data = data;
+    }
+
+    public Map<String, Object> getHandlerResult() {
+        return handlerResult;
+    }
+
+    public void setHandlerResult(Map<String, Object> handlerResult) {
+        this.handlerResult = handlerResult;
+    }
+
+    public int getOperatorType() {
+        return operatorType;
+    }
+
+    public void setOperatorType(int operatorType) {
+        this.operatorType = operatorType;
+    }
+
+    public long getOperatorId() {
+        return operatorId;
+    }
+
+    public void setOperatorId(long operatorId) {
+        this.operatorId = operatorId;
     }
 
     public String getOperator() {

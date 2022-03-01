@@ -6,7 +6,6 @@ package com.bilibili.universal.process.model.log;
 
 
 import java.io.Serializable;
-import java.sql.Timestamp;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -28,10 +27,11 @@ public class ProcessStatusLog implements Serializable {
     private int               sourceStatus;
     private int               destinationStatus;
 
+    private int               operatorType;
+    private long              operatorId;
     private String            operator;
-    private String            remark;
 
-    private Timestamp ctime;
+    private String            remark;
 
     /**
      * No arguments constructor.
@@ -53,49 +53,30 @@ public class ProcessStatusLog implements Serializable {
     }
 
     /**
-     * Constructor with no ctime.
-     *
-     * @param processNo
+     * Constructor with all arguments.
+     * 
+     * @param processNo 
      * @param templateId
      * @param actionId
      * @param sourceStatus
      * @param destinationStatus
+     * @param operatorType
+     * @param operatorId
      * @param operator
      * @param remark
-     */
-    public ProcessStatusLog(long processNo, int templateId, int actionId, int sourceStatus, int destinationStatus, String operator, String remark) {
-        this.processNo = processNo;
-        this.templateId = templateId;
-        this.actionId = actionId;
-        this.sourceStatus = sourceStatus;
-        this.destinationStatus = destinationStatus;
-        this.operator = operator;
-        this.remark = remark;
-    }
-
-    /**
-     * All arguments constructor.
-     *
-     * @param processNo
-     * @param templateId
-     * @param actionId
-     * @param sourceStatus
-     * @param destinationStatus
-     * @param operator
-     * @param remark
-     * @param ctime
      */
     public ProcessStatusLog(long processNo, int templateId, int actionId, int sourceStatus,
-                            int destinationStatus, String operator, String remark,
-                            Timestamp ctime) {
+                            int destinationStatus, int operatorType, long operatorId,
+                            String operator, String remark) {
         this.processNo = processNo;
         this.templateId = templateId;
         this.actionId = actionId;
         this.sourceStatus = sourceStatus;
         this.destinationStatus = destinationStatus;
+        this.operatorType = operatorType;
+        this.operatorId = operatorId;
         this.operator = operator;
         this.remark = remark;
-        this.ctime = ctime;
     }
 
     public long getProcessNo() {
@@ -138,6 +119,22 @@ public class ProcessStatusLog implements Serializable {
         this.destinationStatus = destinationStatus;
     }
 
+    public int getOperatorType() {
+        return operatorType;
+    }
+
+    public void setOperatorType(int operatorType) {
+        this.operatorType = operatorType;
+    }
+
+    public long getOperatorId() {
+        return operatorId;
+    }
+
+    public void setOperatorId(long operatorId) {
+        this.operatorId = operatorId;
+    }
+
     public String getOperator() {
         return operator;
     }
@@ -152,14 +149,6 @@ public class ProcessStatusLog implements Serializable {
 
     public void setRemark(String remark) {
         this.remark = remark;
-    }
-
-    public Timestamp getCtime() {
-        return ctime;
-    }
-
-    public void setCtime(Timestamp ctime) {
-        this.ctime = ctime;
     }
 
     @Override

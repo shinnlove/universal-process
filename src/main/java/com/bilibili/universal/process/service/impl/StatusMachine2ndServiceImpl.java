@@ -121,8 +121,9 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
             execute(context, handlers);
 
             // secondly create new process
-            long newProcessId = createProcess(templateId, -1, pno, refUniqueNo, parentRefUniqueNo,
-                source, destination, dataContext.getOperator(), dataContext.getRemark());
+            long newProcessId = createProcess(templateId, pno, refUniqueNo, parentRefUniqueNo,
+                source, destination, dataContext.getOperatorType(), dataContext.getOperatorId(),
+                dataContext.getOperator(), dataContext.getRemark());
 
             // Warning: give callback a chance to execute outta business codes, callback must after execute!
             if (callback != null) {
@@ -206,8 +207,8 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
             execute(context, handlers(actionId, true));
 
             // rotate embed status
-            proceedProcessStatus(templateId, actionId, no, src, dst, dataContext.getOperator(),
-                dataContext.getRemark());
+            proceedProcessStatus(templateId, actionId, no, src, dst, dataContext.getOperatorType(),
+                dataContext.getOperatorId(), dataContext.getOperator(), dataContext.getRemark());
 
             if (proceedParent && pRefNo > 0) {
                 // slowest child will proceed parent whose dst follows with the newest slowest child

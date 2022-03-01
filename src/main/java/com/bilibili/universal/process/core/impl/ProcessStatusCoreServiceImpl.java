@@ -32,23 +32,29 @@ public class ProcessStatusCoreServiceImpl implements ProcessStatusCoreService {
     private ProcessStatusLogCoreService processStatusLogCoreService;
 
     @Override
-    public long createProcessWithStatus(int templateId, int actionId, long processNo,
-                                        long refUniqueNo, long parentRefUniqueNo, int source,
-                                        int destination, String operator, String remark) {
+    public long createProcessWithStatus(int templateId, long processNo, long refUniqueNo,
+                                        long parentRefUniqueNo, int source, int destination,
+                                        int operatorType, long operatorId, String operator,
+                                        String remark) {
         // build model
         UniversalProcess uProcess = new UniversalProcess();
-        uProcess.setProcessNo(processNo);
         uProcess.setTemplateId(templateId);
+        uProcess.setProcessNo(processNo);
         uProcess.setRefUniqueNo(refUniqueNo);
         uProcess.setParentRefUniqueNo(parentRefUniqueNo);
+
         uProcess.setCurrentStatus(destination);
+
+        uProcess.setLatestOperatorType(operatorType);
+        uProcess.setLatestOperatorId(operatorId);
         uProcess.setLatestOperator(operator);
+
         uProcess.setRemark(remark);
 
         long processId = universalProcessCoreService.addProcess(uProcess);
 
-        ProcessStatusLog statusLog = new ProcessStatusLog(processNo, templateId, actionId, source,
-            destination, remark, operator);
+        ProcessStatusLog statusLog = new ProcessStatusLog(processNo, templateId, -1, source,
+            destination, operatorType, operatorId, operator, remark);
         processStatusLogCoreService.insertProcessLog(statusLog);
 
         return processId;
@@ -56,13 +62,14 @@ public class ProcessStatusCoreServiceImpl implements ProcessStatusCoreService {
 
     @Override
     public long proceedProcessStatus(int templateId, int actionId, long processNo, int source,
-                                     int destination, String remark, String operator) {
+                                     int destination, int operatorType, long operatorId,
+                                     String operator, String remark) {
         // update process status
         universalProcessCoreService.updateProcessStatus(processNo, source, destination);
 
         // add log after status updated
         ProcessStatusLog statusLog = new ProcessStatusLog(processNo, templateId, actionId, source,
-            destination, remark, operator);
+            destination, operatorType, operatorId, operator, remark);
         return processStatusLogCoreService.insertProcessLog(statusLog);
     }
 
