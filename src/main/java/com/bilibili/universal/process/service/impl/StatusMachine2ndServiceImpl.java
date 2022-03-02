@@ -397,7 +397,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         int actionId = action.getActionId();
 
         // real execute after deduce real action
-        return proceedProcess(actionId, refNo, dataContext, callback, false, false);
+        return proceedProcess(actionId, refNo, dataContext, callback);
     }
 
 }
