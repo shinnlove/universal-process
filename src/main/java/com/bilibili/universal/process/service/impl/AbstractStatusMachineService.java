@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.TransactionStatus;
@@ -296,6 +297,12 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         // prevent NPE
         if (Objects.isNull(dataContext)) {
             dataContext = new DataContext();
+        } else {
+            Object data = dataContext.getData();
+            if (Objects.nonNull(data)) {
+                // pickup operator info..
+                BeanUtils.copyProperties(data, dataContext);
+            }
         }
         context.setDataContext(dataContext);
         return context;
