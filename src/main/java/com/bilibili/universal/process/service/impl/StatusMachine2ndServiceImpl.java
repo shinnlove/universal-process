@@ -4,9 +4,7 @@
  */
 package com.bilibili.universal.process.service.impl;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 import org.springframework.stereotype.Service;
@@ -22,7 +20,7 @@ import com.bilibili.universal.process.model.cache.TemplateMetadata;
 import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
-import com.bilibili.universal.process.model.status.DragStatusId;
+import com.bilibili.universal.process.model.status.BriefProcess;
 import com.bilibili.universal.process.util.TplUtil;
 import com.bilibili.universal.util.common.AssertUtil;
 
@@ -31,7 +29,7 @@ import com.bilibili.universal.util.common.AssertUtil;
  * @version $Id: StatusMachine2ndServiceImpl.java, v 0.1 2022-02-09 5:50 PM Tony Zhao Exp $$
  */
 @Service
-public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategyService {
+public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrategyService {
 
     @SuppressWarnings("rawtypes")
     @Override
@@ -217,7 +215,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                 int pid = pProcess.getTemplateId();
                 int pSrc = pProcess.getCurrentStatus();
 
-                DragStatusId slowest = slowestChildrenStatus(refChildren(pRefNo));
+                BriefProcess slowest = slowestChildrenStatus(refChildren(pRefNo));
                 // VIP: pls use slowest template id and its current status do ref mapping!!
                 int pDst = statusC2P(pid, slowest.getTid(), slowest.getStatus());
 
@@ -318,7 +316,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
                 processNos.put(id, no);
             });
 
-            DragStatusId slowest = slowestChildrenStatus(refChildren(pno));
+            BriefProcess slowest = slowestChildrenStatus(refChildren(pno));
             // VIP: pls use slowest template id and its current status do ref mapping!!
             int dst = statusC2P(ptId, slowest.getTid(), slowest.getStatus());
 
@@ -326,6 +324,80 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineStrategySe
         });
 
         return new BatchInitResult(pno, processNos);
+    }
+
+    @Override
+    public ProcessContext smartProceedNext(long refUniqueNo, DataContext dataContext) {
+        return smartProceedNext(refUniqueNo, dataContext, resp -> {
+        });
+    }
+
+    @Override
+    public ProcessContext smartProceedNext(long refUniqueNo, DataContext dataContext,
+                                           Consumer<ProcessContext> callback) {
+
+        UniversalProcess process = existRefProcess(refUniqueNo);
+
+        int tid = process.getTemplateId();
+        long refNo = process.getRefUniqueNo();
+        int src = process.getCurrentStatus();
+
+        int dst = nextActionDst(tid, src, false);
+        if (dst < 0) {
+            return buildContext(tid, -1, refNo, -1, -1, dataContext);
+        }
+
+        // only deduce self is parent scenario
+        if (isParentTpl(tid)) {
+
+            List<BriefProcess> children = new ArrayList<>();
+            List<UniversalProcess> refers = refChildren(refNo);
+            for (UniversalProcess c : refers) {
+                int cTid = c.getTemplateId();
+                int cStatus = c.getCurrentStatus();
+                int cDst = cStatus;
+
+                int aid = nearestAction(tid, dst, cTid, cStatus);
+                if (aid > 0) {
+                    ActionCache action = getAction(aid);
+                    cDst = action.getDestination();
+                }
+
+                children.add(new BriefProcess(cTid, cDst, getStatusSequence(cTid, cDst)));
+            }
+
+            Collections.sort(children);
+
+            int min = Integer.MAX_VALUE;
+            for (BriefProcess c : children) {
+                int cTid = c.getTid();
+
+                int pStatus = statusC2P(tid, cTid, c.getStatus());
+                if (pStatus < min) {
+                    min = pStatus;
+                }
+            }
+
+            if (behind(tid, dst, min)) {
+                dst = nextActionDst(tid, min, true);
+                if (dst < 0) {
+                    return buildContext(tid, -1, refNo, -1, -1, dataContext);
+                }
+            }
+
+        }
+
+        // real selected appropriate action from source to destination
+
+        TemplateCache template = getCache(tid);
+        Map<Integer, Map<Integer, ActionCache>> actionCacheMap = template.getActionTable();
+
+        Map<Integer, ActionCache> actionCache = actionCacheMap.get(dst);
+        ActionCache action = actionCache.get(src);
+        int actionId = action.getActionId();
+
+        // real execute after deduce real action
+        return proceedProcess(actionId, refNo, dataContext, callback, false, false);
     }
 
 }

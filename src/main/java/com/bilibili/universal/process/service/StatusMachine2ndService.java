@@ -10,6 +10,6 @@ package com.bilibili.universal.process.service;
  */
 public interface StatusMachine2ndService extends StatusMachineInitDstService,
                                          StatusMachineProceedCascadeService,
-                                         StatusMachineBatchService {
+                                         StatusMachineBatchService, StatusMachineSmartService {
 
 }

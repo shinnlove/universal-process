@@ -107,6 +107,12 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return template;
     }
 
+    protected ActionCache getAction(int actionId) {
+        TemplateCache template = getTpl(actionId);
+        Map<Integer, ActionCache> actionCacheMap = template.getActions();
+        return actionCacheMap.get(actionId);
+    }
+
     protected List<ActionHandler> handlers(int actionId, boolean isSync) {
         return processMetadataService.getExecutions(actionId, isSync);
     }
@@ -157,10 +163,12 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return universalProcessCoreService.getProcessByRefUniqueNo(refUniqueNo, false);
     }
 
-    protected void existRefProcess(long refUniqueNo) {
+    protected UniversalProcess existRefProcess(long refUniqueNo) {
         UniversalProcess process = universalProcessCoreService.getProcessByRefUniqueNo(refUniqueNo,
             false);
         AssertUtil.isNotNull(process);
+
+        return process;
     }
 
     protected void notExistRefProcess(long refUniqueNo) {

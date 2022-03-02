@@ -17,7 +17,7 @@ import com.bilibili.universal.process.model.cache.TemplateCache;
 import com.bilibili.universal.process.model.cascade.PrepareParent;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
-import com.bilibili.universal.process.model.status.DragStatusId;
+import com.bilibili.universal.process.model.status.BriefProcess;
 import com.bilibili.universal.process.model.status.StatusRefMapping;
 
 /**
@@ -93,8 +93,8 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         }
     }
 
-    protected DragStatusId slowestChildrenStatus(List<UniversalProcess> children) {
-        DragStatusId drag = new DragStatusId(-1, -1);
+    protected BriefProcess slowestChildrenStatus(List<UniversalProcess> children) {
+        BriefProcess drag = new BriefProcess(-1, -1, -1);
 
         if (CollectionUtils.isEmpty(children)) {
             return drag;
@@ -241,12 +241,36 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         return behind(parentTemplateId, childRefInParentStatus, parentStatus);
     }
 
+    protected int getStatusSequence(int templateId, int status) {
+        TemplateCache cache = getCache(templateId);
+        StatusCache[] arr = cache.getStatusArray();
+        return getStatusSequence(arr, status);
+    }
+
     protected int getStatusSequence(StatusCache[] arr, int status) {
         for (int i = 0; i < arr.length; i++) {
             if (status == arr[i].getNo()) {
                 return arr[i].getSequence();
             }
         }
+        return -1;
+    }
+
+    protected int nextSequenceStatus(StatusCache[] arr, int seq, boolean contains) {
+        for (int i = 0; i < arr.length; i++) {
+
+            if (contains) {
+                if (seq <= arr[i].getSequence()) {
+                    return arr[i].getNo();
+                }
+            } else {
+                if (seq < arr[i].getSequence()) {
+                    return arr[i].getNo();
+                }
+            }
+
+        }
+
         return -1;
     }
 
