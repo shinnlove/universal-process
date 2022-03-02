@@ -4,7 +4,7 @@
  */
 package com.bilibili.universal.process.service.impl;
 
-import java.util.Map;
+import java.util.Objects;
 
 import com.bilibili.universal.process.model.cache.ActionCache;
 import com.bilibili.universal.process.model.cache.StatusCache;
@@ -19,7 +19,6 @@ public abstract class AbstractStatusMachineSmartStrategyService extends
 
     protected int nextActionDst(int templateId, int current, boolean contains) {
         TemplateCache template = getCache(templateId);
-        Map<Integer, Map<Integer, ActionCache>> actionMap = template.getActionTable();
         StatusCache[] arr = template.getStatusArray();
 
         int currentSeq = getStatusSequence(arr, current);
@@ -28,10 +27,9 @@ public abstract class AbstractStatusMachineSmartStrategyService extends
         while (statusNo > 0) {
             statusNo = nextSequenceStatus(arr, currentSeq, contains);
 
-            if (actionMap.containsKey(statusNo) && actionMap.get(statusNo).containsKey(current)) {
-                Map<Integer, ActionCache> actionCacheMap = actionMap.get(statusNo);
-                ActionCache actionCache = actionCacheMap.get(current);
-                return actionCache.getDestination();
+            ActionCache cache = getAction(templateId, current, statusNo);
+            if (Objects.nonNull(cache)) {
+                return cache.getDestination();
             }
 
             currentSeq += 1;

@@ -4,6 +4,9 @@
  */
 package com.bilibili.universal.process.service.impl;
 
+import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_ACTION_ID;
+import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_STATUS;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +14,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,32 +94,6 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
     @Autowired
     private ProcessBlockingCoreService  processBlockingCoreService;
 
-    protected int getDst(int templateId) {
-        return processMetadataService.getDstByTemplateId(templateId);
-    }
-
-    protected TemplateCache getCache(int templateId) {
-        TemplateCache template = processMetadataService.getTemplateById(templateId);
-        AssertUtil.isNotNull(template);
-        return template;
-    }
-
-    protected TemplateCache getTpl(int actionId) {
-        TemplateCache template = processMetadataService.getTemplateByActionId(actionId);
-        AssertUtil.isNotNull(template);
-        return template;
-    }
-
-    protected ActionCache getAction(int actionId) {
-        TemplateCache template = getTpl(actionId);
-        Map<Integer, ActionCache> actionCacheMap = template.getActions();
-        return actionCacheMap.get(actionId);
-    }
-
-    protected List<ActionHandler> handlers(int actionId, boolean isSync) {
-        return processMetadataService.getExecutions(actionId, isSync);
-    }
-
     protected List<ActionHandler> triggers(int actionId) {
         TemplateCache template = getTpl(actionId);
         Map<String, List<ActionHandler>> triggers = template.getTriggers();
@@ -154,6 +130,66 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         }
 
         return new ArrayList<>();
+    }
+
+    protected TemplateCache getCache(int templateId) {
+        TemplateCache template = processMetadataService.getTemplateById(templateId);
+        AssertUtil.isNotNull(template);
+        return template;
+    }
+
+    protected TemplateCache getTpl(int actionId) {
+        TemplateCache template = processMetadataService.getTemplateByActionId(actionId);
+        AssertUtil.isNotNull(template);
+        return template;
+    }
+
+    protected int defaultDst(int templateId) {
+        return processMetadataService.getDstByTemplateId(templateId);
+    }
+
+    protected ActionCache getAction(int actionId) {
+        TemplateCache template = getTpl(actionId);
+        Map<Integer, ActionCache> actionCacheMap = template.getActions();
+        return actionCacheMap.get(actionId);
+    }
+
+    protected ActionCache getAction(int templateId, int source, int destination) {
+        TemplateCache template = getCache(templateId);
+        Map<Integer, Map<Integer, ActionCache>> actionTable = template.getActionTable();
+
+        if (CollectionUtils.isEmpty(actionTable) || !actionTable.containsKey(destination)) {
+            return null;
+        }
+
+        Map<Integer, ActionCache> actionCacheMap = actionTable.get(destination);
+
+        if (CollectionUtils.isEmpty(actionCacheMap)) {
+            return null;
+        }
+
+        if (actionCacheMap.containsKey(source)) {
+            return actionCacheMap.get(source);
+        } else {
+            if (actionCacheMap.containsKey(DEFAULT_STATUS)) {
+                return actionCacheMap.get(DEFAULT_STATUS);
+            }
+        }
+
+        return null;
+    }
+
+    protected int getActionId(int templateId, int source, int destination) {
+        ActionCache cache = getAction(templateId, source, destination);
+        if (Objects.nonNull(cache)) {
+            return cache.getActionId();
+        }
+
+        return DEFAULT_ACTION_ID;
+    }
+
+    protected List<ActionHandler> handlers(int actionId, boolean isSync) {
+        return processMetadataService.getExecutions(actionId, isSync);
     }
 
     protected UniversalProcess queryNoProcess(long processNo) {
@@ -203,14 +239,6 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
 
     protected List<ProcessBlocking> blockingByNo(long processNo) {
         return processBlockingCoreService.getBlockingByProcessNo(processNo);
-    }
-
-    protected List<UniversalProcess> refSiblings(long parentRefNo, long selfNo) {
-        List<UniversalProcess> childProcesses = refChildren(parentRefNo);
-        List<UniversalProcess> otherChildProcessList = childProcesses.stream()
-            .filter(t -> t.getProcessNo() != selfNo).collect(Collectors.toList());
-
-        return otherChildProcessList;
     }
 
     protected List<UniversalProcess> refChildren(long parentRefUniqueNo) {

@@ -33,10 +33,6 @@ public class BriefProcess implements Serializable, Comparable<BriefProcess> {
     public BriefProcess() {
     }
 
-    public BriefProcess(int tid) {
-        this.tid = tid;
-    }
-
     public BriefProcess(int tid, int sequence, int status) {
         this.tid = tid;
         this.sequence = sequence;

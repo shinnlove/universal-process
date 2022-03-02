@@ -14,6 +14,12 @@ public final class MachineConstant {
 
     }
 
+    public static final int    DEFAULT_TEMPLATE_ID         = -1;
+
+    public static final int    DEFAULT_ACTION_ID           = -1;
+
+    public static final int    DEFAULT_STATUS              = -1;
+
     public static final String INVALID_PARAMETERS          = "invalid parameters.";
 
     public static final int    DEFAULT_OPERATOR_TYPE       = -1;

@@ -4,18 +4,17 @@
  */
 package com.bilibili.universal.process.service.impl;
 
+import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_ACTION_ID;
+import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_STATUS;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.util.CollectionUtils;
 
-import com.bilibili.universal.process.interfaces.ActionHandler;
-import com.bilibili.universal.process.model.cache.ActionCache;
 import com.bilibili.universal.process.model.cache.StatusCache;
 import com.bilibili.universal.process.model.cache.TemplateCache;
-import com.bilibili.universal.process.model.cascade.PrepareParent;
-import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
 import com.bilibili.universal.process.model.status.BriefProcess;
 import com.bilibili.universal.process.model.status.StatusRefMapping;
@@ -29,75 +28,43 @@ import com.bilibili.universal.process.model.status.StatusRefMapping;
  * @author Tony Zhao
  * @version $Id: AbstractStatusMachineStrategyService.java, v 0.1 2022-02-23 4:50 PM Tony Zhao Exp $$
  */
-public abstract class AbstractStatusMachineStrategyService extends AbstractStatusMachineService {
+public abstract class AbstractStatusMachineStrategyService extends
+                                                           AbstractStatusMachineParamService {
 
-    protected PrepareParent getPrepare(Map<String, Integer> prepare) {
-        for (Map.Entry<String, Integer> entry : prepare.entrySet()) {
-            String prepareName = entry.getKey();
-            int prepareId = entry.getValue();
-            return new PrepareParent(prepareName, prepareId);
+    protected List<StatusCache> statusP2C(int parentTemplateId, int childTemplateId,
+                                          int parentDestination) {
+        StatusRefMapping refMapping = statusRefMapping(parentTemplateId, childTemplateId);
+        if (refMapping == null) {
+            return Collections.emptyList();
         }
-        return null;
+
+        Map<Integer, List<StatusCache>> p2cMapping = refMapping.getParent2Child();
+        if (CollectionUtils.isEmpty(p2cMapping) || !p2cMapping.containsKey(parentDestination)) {
+            return Collections.emptyList();
+        }
+
+        return p2cMapping.get(parentDestination);
     }
 
-    protected Object getResultByClass(ProcessContext context, String className) {
-        Object result = null;
-        Map<String, Object> results = context.getResultObject();
-        if (!CollectionUtils.isEmpty(results) && results.containsKey(className)) {
-            result = results.get(className);
-        }
-        return result;
-    }
-
-    private Object lastHandlerResult(ActionCache cache, ProcessContext context) {
-        // use default if not exist
-        List<ActionHandler> syncHandlers = cache.getSyncHandlers();
-        if (CollectionUtils.isEmpty(syncHandlers)) {
-            return null;
+    protected int statusC2P(int parentTemplateId, int childTemplateId, int childStatus) {
+        StatusRefMapping refMapping = statusRefMapping(parentTemplateId, childTemplateId);
+        if (refMapping == null) {
+            return DEFAULT_STATUS;
         }
 
-        int size = syncHandlers.size();
-        ActionHandler h = syncHandlers.get(size - 1);
-        String name = h.getClass().getName();
-        return getResultByClass(context, name);
-    }
-
-    protected int appropriateAction(int parentTemplateId, int source, int destination) {
-        int actionId = -1;
-        TemplateCache cache = getCache(parentTemplateId);
-
-        // no target action id
-        Map<Integer, Map<Integer, ActionCache>> parentActionDst = cache.getActionTable();
-        if (CollectionUtils.isEmpty(parentActionDst) || !parentActionDst.containsKey(destination)) {
-            return actionId;
+        Map<Integer, Integer> c2p = refMapping.getChild2parent();
+        if (c2p.containsKey(childStatus)) {
+            return c2p.get(childStatus);
         }
 
-        Map<Integer, ActionCache> dstMapping = parentActionDst.get(destination);
-        if (CollectionUtils.isEmpty(dstMapping) || !dstMapping.containsKey(source)) {
-            return actionId;
-        }
-
-        // target parent action id
-        ActionCache dstAction = dstMapping.get(source);
-        return dstAction.getActionId();
-    }
-
-    protected Object chooseParentParam(ActionCache cache, ProcessContext context,
-                                       int parentTemplateId) {
-        PrepareParent prepare = getPrepare(cache.getPrepareHandler());
-        if (prepare != null && prepare.getParentTemplateId() == parentTemplateId) {
-            // has prepare parameter
-            return getResultByClass(context, prepare.getClassName());
-        } else {
-            return lastHandlerResult(cache, context);
-        }
+        return DEFAULT_STATUS;
     }
 
     protected BriefProcess slowestChildrenStatus(List<UniversalProcess> children) {
-        BriefProcess drag = new BriefProcess(-1, -1, -1);
+        BriefProcess brief = new BriefProcess(-1, -1, -1);
 
         if (CollectionUtils.isEmpty(children)) {
-            return drag;
+            return brief;
         }
 
         UniversalProcess process = children.get(0);
@@ -108,12 +75,12 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         StatusCache[] arr = cache.getStatusArray();
 
         if (arr.length <= 0) {
-            return drag;
+            return brief;
         }
 
         // init
-        drag.setStatus(current);
-        drag.setTid(id);
+        brief.setTid(id);
+        brief.setStatus(current);
 
         int min = getStatusSequence(arr, current);
         for (UniversalProcess c : children) {
@@ -123,25 +90,25 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
                 min = seq;
 
                 // VIP: refresh slowest status and its template id! ×3
-                drag.setStatus(cs);
-                drag.setTid(c.getTemplateId());
+                brief.setStatus(cs);
+                brief.setTid(c.getTemplateId());
                 break;
             }
         }
 
-        return drag;
+        return brief;
     }
 
     protected int nearestAction(int parentTemplateId, int parentDestination, int childTemplateId,
                                 int childStatus) {
         TemplateCache parent = getCache(parentTemplateId);
-        // it's initialized in order
+        // it's already initialized in order
         StatusCache[] arr = parent.getStatusArray();
         int startSeq = getStatusSequence(arr, parentDestination);
 
         for (int i = 0; i < arr.length; i++) {
             if (startSeq <= arr[i].getSequence()) {
-                int aid = searchNearestOnce(parentTemplateId, arr[i].getNo(), childTemplateId,
+                int aid = searchNearestActionOnce(parentTemplateId, arr[i].getNo(), childTemplateId,
                     childStatus);
                 if (aid > 0) {
                     return aid;
@@ -153,64 +120,38 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         return -1;
     }
 
-    protected int searchNearestOnce(int parentTemplateId, int parentDestination,
-                                    int childTemplateId, int childStatus) {
-        int actionId = -1;
-
-        TemplateCache template = getCache(childTemplateId);
-        Map<Integer, Map<Integer, ActionCache>> childDstRoute = template.getActionTable();
-        if (CollectionUtils.isEmpty(childDstRoute)) {
-            // template has no action is a wrong case!
-            // VIP1: no need to proceed this process since child has no route to dst 
-            return actionId;
-        }
-
-        StatusRefMapping refMapping = statusRefMapping(parentTemplateId, childTemplateId);
-        if (refMapping == null) {
-            return actionId;
-        }
-
-        Map<Integer, List<StatusCache>> p2cMapping = refMapping.getParent2Child();
-        if (CollectionUtils.isEmpty(p2cMapping) || !p2cMapping.containsKey(parentDestination)) {
-            return actionId;
-        }
-
+    private int searchNearestActionOnce(int parentTemplateId, int parentDestination,
+                                        int childTemplateId, int childStatus) {
         // do search nearest
         // VIP2: no need to proceed this process since child has no refer status to parent
+        List<StatusCache> childrenDst = statusP2C(parentTemplateId, childTemplateId,
+            parentDestination);
+        if (CollectionUtils.isEmpty(childrenDst)) {
+            return DEFAULT_ACTION_ID;
+        }
 
         // keep in order again
-        List<StatusCache> childrenDst = p2cMapping.get(parentDestination);
         Collections.sort(childrenDst);
 
         for (StatusCache sc : childrenDst) {
-            int eachDst = sc.getNo();
+            int dst = sc.getNo();
 
             // VIP3: remember, no need to judge back and forth, since biz status could turn around.. ×3
-            // ...
-
-            if (eachDst <= 0 || !childDstRoute.containsKey(eachDst)
-                || !childDstRoute.get(eachDst).containsKey(childStatus)) {
-                // VIP4: current child status node to this refer status node has no route path! ×2
+            // VIP4: current child status node to this refer status node has no route path! ×2
+            if (dst <= 0) {
                 continue;
             }
 
-            // targeting one route path..
-            Map<Integer, ActionCache> actionMap = childDstRoute.get(eachDst);
-            ActionCache action = actionMap.get(childStatus);
-
-            actionId = action.getActionId();
+            int aid = getActionId(childTemplateId, childStatus, dst);
+            if (aid < 0) {
+                continue;
+            }
 
             // only need the nearest status node.
-            break;
+            return aid;
         }
 
-        return actionId;
-    }
-
-    protected Object chooseChildParam(ActionCache cache, ProcessContext context) {
-        // parent no need to prepare for children since it has multiple children
-        // just fetch last handler's result for child process
-        return lastHandlerResult(cache, context);
+        return DEFAULT_ACTION_ID;
     }
 
     /**
@@ -225,20 +166,28 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
      */
     protected boolean behindRefStatus(int parentTemplateId, int parentStatus, int childTemplateId,
                                       int childStatus) {
-        StatusRefMapping refMapping = statusRefMapping(parentTemplateId, childTemplateId);
-        if (refMapping == null) {
+        int c2pRefStatus = statusC2P(parentTemplateId, childTemplateId, childStatus);
+        if (c2pRefStatus < 0) {
             return false;
         }
-
-        Map<Integer, Integer> parentRef = refMapping.getChild2parent();
-        if (CollectionUtils.isEmpty(parentRef)) {
-            return false;
-        }
-
-        int childRefInParentStatus = parentRef.get(childStatus);
 
         // judge whether current status is behind current parent ref minimum status
-        return behind(parentTemplateId, childRefInParentStatus, parentStatus);
+        return behind(parentTemplateId, c2pRefStatus, parentStatus);
+    }
+
+    protected boolean behind(int templateId, int former, int latter) {
+        TemplateCache cache = getCache(templateId);
+        StatusCache[] arr = cache.getStatusArray();
+
+        int formerSeq = getStatusSequence(arr, former);
+        int latterSeq = getStatusSequence(arr, latter);
+
+        // behind means smaller than sequence
+        if (formerSeq < latterSeq) {
+            return true;
+        }
+
+        return false;
     }
 
     protected int getStatusSequence(int templateId, int status) {
@@ -272,37 +221,6 @@ public abstract class AbstractStatusMachineStrategyService extends AbstractStatu
         }
 
         return -1;
-    }
-
-    protected int statusC2P(int parentTemplateId, int childTemplateId, int childStatus) {
-        int mappingStatus = -1;
-
-        StatusRefMapping refMapping = statusRefMapping(parentTemplateId, childTemplateId);
-        if (refMapping == null) {
-            return mappingStatus;
-        }
-
-        Map<Integer, Integer> c2p = refMapping.getChild2parent();
-        if (c2p.containsKey(childStatus)) {
-            return c2p.get(childStatus);
-        }
-
-        return mappingStatus;
-    }
-
-    protected boolean behind(int templateId, int former, int latter) {
-        TemplateCache cache = getCache(templateId);
-        StatusCache[] arr = cache.getStatusArray();
-
-        int formerSeq = getStatusSequence(arr, former);
-        int latterSeq = getStatusSequence(arr, latter);
-
-        // behind means smaller than sequence
-        if (formerSeq < latterSeq) {
-            return true;
-        }
-
-        return false;
     }
 
 }

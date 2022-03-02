@@ -42,7 +42,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
     @Override
     public long initProcess(int templateId, long refUniqueNo, DataContext dataContext,
                             Consumer<ProcessContext> callback) {
-        int dst = getDst(templateId);
+        int dst = defaultDst(templateId);
         return initProcess(templateId, dst, refUniqueNo, dataContext, callback);
     }
 
@@ -58,7 +58,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
     @Override
     public long initProcess(int templateId, long refUniqueNo, long parentRefUniqueNo,
                             DataContext dataContext, Consumer<ProcessContext> callback) {
-        int dst = getDst(templateId);
+        int dst = defaultDst(templateId);
         return initProcess(templateId, dst, refUniqueNo, parentRefUniqueNo, dataContext, callback);
     }
 
@@ -222,7 +222,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
                 if (behind(pid, pSrc, pDst)) {
                     // really behind should be proceeded!
 
-                    int aid = appropriateAction(pid, pSrc, pDst);
+                    int aid = getActionId(pid, pSrc, pDst);
                     if (aid > 0) {
                         // Special Warning: cascade proceed parent, never proceed any children in reverse!
                         DataContext d = new DataContext(chooseParentParam(cache, context, pid));
@@ -388,16 +388,14 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         }
 
         // real selected appropriate action from source to destination
+        int aid = getActionId(tid, src, dst);
+        if (aid > 0) {
+            // execute after deduce
+            return proceedProcess(aid, refNo, dataContext, callback);
+        }
 
-        TemplateCache template = getCache(tid);
-        Map<Integer, Map<Integer, ActionCache>> actionCacheMap = template.getActionTable();
-
-        Map<Integer, ActionCache> actionCache = actionCacheMap.get(dst);
-        ActionCache action = actionCache.get(src);
-        int actionId = action.getActionId();
-
-        // real execute after deduce real action
-        return proceedProcess(actionId, refNo, dataContext, callback);
+        // missing appropriate action id here
+        return buildContext(tid, -1, refNo, -1, -1, dataContext);
     }
 
 }
