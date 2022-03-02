@@ -4,12 +4,7 @@
  */
 package com.bilibili.universal.process.service.impl;
 
-import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_ACTION_ID;
-import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_STATUS;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -28,12 +23,8 @@ import com.bilibili.universal.process.consts.MachineConstant;
 import com.bilibili.universal.process.core.ProcessBlockingCoreService;
 import com.bilibili.universal.process.core.ProcessStatusCoreService;
 import com.bilibili.universal.process.core.UniversalProcessCoreService;
-import com.bilibili.universal.process.enums.TemplateTriggerType;
 import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.blocking.ProcessBlocking;
-import com.bilibili.universal.process.model.cache.ActionCache;
-import com.bilibili.universal.process.model.cache.StatusCache;
-import com.bilibili.universal.process.model.cache.TemplateCache;
 import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
@@ -80,7 +71,7 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
 
     /** universal cache metadata service */
     @Autowired
-    private ProcessMetadataService      processMetadataService;
+    protected ProcessMetadataService    processMetadataService;
 
     /** universal process core service */
     @Autowired
@@ -93,104 +84,6 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
     /** process blocking core service */
     @Autowired
     private ProcessBlockingCoreService  processBlockingCoreService;
-
-    protected List<ActionHandler> triggers(int actionId) {
-        TemplateCache template = getTpl(actionId);
-        Map<String, List<ActionHandler>> triggers = template.getTriggers();
-        Map<Integer, ActionCache> actionMap = template.getActions();
-        ActionCache cache = actionMap.get(actionId);
-
-        StatusCache[] arr = template.getStatusArray();
-
-        return getTriggers(arr, cache.getDestination(), triggers);
-    }
-
-    protected List<ActionHandler> triggers(int templateId, int status) {
-        TemplateCache template = getCache(templateId);
-        Map<String, List<ActionHandler>> triggers = template.getTriggers();
-        StatusCache[] arr = template.getStatusArray();
-
-        return getTriggers(arr, status, triggers);
-    }
-
-    private List<ActionHandler> getTriggers(StatusCache[] arr, int status,
-                                            Map<String, List<ActionHandler>> triggers) {
-        for (int i = 0; i < arr.length; i++) {
-            StatusCache sc = arr[i];
-            if (sc.getNo() == status) {
-                int type = sc.getAccomplish();
-                if (type > 0) {
-                    String typeName = TemplateTriggerType.getNameByCode(type);
-                    if (typeName != null && triggers.containsKey(typeName)) {
-                        return triggers.get(typeName);
-                    }
-                }
-                break;
-            }
-        }
-
-        return new ArrayList<>();
-    }
-
-    protected TemplateCache getCache(int templateId) {
-        TemplateCache template = processMetadataService.getTemplateById(templateId);
-        AssertUtil.isNotNull(template);
-        return template;
-    }
-
-    protected TemplateCache getTpl(int actionId) {
-        TemplateCache template = processMetadataService.getTemplateByActionId(actionId);
-        AssertUtil.isNotNull(template);
-        return template;
-    }
-
-    protected int defaultDst(int templateId) {
-        return processMetadataService.getDstByTemplateId(templateId);
-    }
-
-    protected ActionCache getAction(int actionId) {
-        TemplateCache template = getTpl(actionId);
-        Map<Integer, ActionCache> actionCacheMap = template.getActions();
-        return actionCacheMap.get(actionId);
-    }
-
-    protected ActionCache getAction(int templateId, int source, int destination) {
-        TemplateCache template = getCache(templateId);
-        Map<Integer, Map<Integer, ActionCache>> actionTable = template.getActionTable();
-
-        if (CollectionUtils.isEmpty(actionTable) || !actionTable.containsKey(destination)) {
-            return null;
-        }
-
-        Map<Integer, ActionCache> actionCacheMap = actionTable.get(destination);
-
-        if (CollectionUtils.isEmpty(actionCacheMap)) {
-            return null;
-        }
-
-        if (actionCacheMap.containsKey(source)) {
-            return actionCacheMap.get(source);
-        } else {
-            if (actionCacheMap.containsKey(DEFAULT_STATUS)) {
-                return actionCacheMap.get(DEFAULT_STATUS);
-            }
-        }
-
-        return null;
-    }
-
-    protected int getActionId(int templateId, int source, int destination) {
-        ActionCache cache = getAction(templateId, source, destination);
-        if (Objects.nonNull(cache)) {
-            return cache.getActionId();
-        }
-
-        return DEFAULT_ACTION_ID;
-    }
-
-    protected List<ActionHandler> handlers(int actionId, boolean isSync) {
-        return processMetadataService.getExecutions(actionId, isSync);
-    }
 
     protected UniversalProcess queryNoProcess(long processNo) {
         return universalProcessCoreService.getProcessByNo(processNo);

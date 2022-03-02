@@ -344,7 +344,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
 
         int dst = nextActionDst(tid, src, false);
         if (dst < 0) {
-            return buildContext(tid, -1, refNo, -1, -1, dataContext);
+            return reject(tid, refNo, dataContext);
         }
 
         // only deduce self is parent scenario
@@ -381,7 +381,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
             if (behind(tid, dst, min)) {
                 dst = nextActionDst(tid, min, true);
                 if (dst < 0) {
-                    return buildContext(tid, -1, refNo, -1, -1, dataContext);
+                    return reject(tid, refNo, dataContext);
                 }
             }
 
@@ -395,7 +395,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         }
 
         // missing appropriate action id here
-        return buildContext(tid, -1, refNo, -1, -1, dataContext);
+        return reject(tid, refNo, dataContext);
     }
 
 }

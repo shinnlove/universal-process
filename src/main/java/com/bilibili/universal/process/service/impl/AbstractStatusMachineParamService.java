@@ -18,7 +18,7 @@ import com.bilibili.universal.process.model.context.ProcessContext;
  * @author Tony Zhao
  * @version $Id: AbstractStatusMachineParamService.java, v 0.1 2022-03-02 8:26 PM Tony Zhao Exp $$
  */
-public abstract class AbstractStatusMachineParamService extends AbstractStatusMachineService {
+public abstract class AbstractStatusMachineParamService extends AbstractStatusMachineCacheService {
 
     protected PrepareParent getPrepare(Map<String, Integer> prepare) {
         for (Map.Entry<String, Integer> entry : prepare.entrySet()) {

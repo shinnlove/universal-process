@@ -4,11 +4,16 @@
  */
 package com.bilibili.universal.process.service.impl;
 
+import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_ACTION_ID;
+import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_STATUS;
+
 import java.util.Objects;
 
 import com.bilibili.universal.process.model.cache.ActionCache;
 import com.bilibili.universal.process.model.cache.StatusCache;
 import com.bilibili.universal.process.model.cache.TemplateCache;
+import com.bilibili.universal.process.model.context.DataContext;
+import com.bilibili.universal.process.model.context.ProcessContext;
 
 /**
  * @author Tony Zhao
@@ -35,7 +40,12 @@ public abstract class AbstractStatusMachineSmartStrategyService extends
             currentSeq += 1;
         }
 
-        return -1;
+        return DEFAULT_ACTION_ID;
+    }
+
+    protected ProcessContext reject(int templateId, long refUniqueNo, DataContext dataContext) {
+        return buildContext(templateId, DEFAULT_ACTION_ID, refUniqueNo, DEFAULT_STATUS,
+            DEFAULT_STATUS, dataContext);
     }
 
 }
