@@ -8,7 +8,9 @@ import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_STAT
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import com.bilibili.universal.process.model.cache.StatusCache;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -364,6 +366,8 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         // only deduce self is parent scenario
         if (isParentTpl(tid)) {
 
+            // begin deduce...
+
             List<BriefProcess> children = new ArrayList<>();
             List<UniversalProcess> refers = refChildren(refNo);
             for (UniversalProcess c : refers) {
@@ -371,6 +375,22 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
                 int cStatus = c.getCurrentStatus();
                 int cDst = cStatus;
 
+                // add filter logic in ref child which status is not in refer status!
+                // in another words: parent's source status is beyond child status already
+                boolean involved = false;
+                List<StatusCache> refP2C = statusP2C(tid, cTid, src);
+                for (StatusCache sc : refP2C) {
+                    if (cStatus == sc.getNo()) {
+                        involved = true;
+                        break;
+                    }
+                }
+
+                if (!involved) {
+                    continue;
+                }
+
+                // search nearest action for proceed.
                 int aid = nearestAction(tid, dst, cTid, cStatus);
                 if (aid > 0) {
                     ActionCache action = getAction(aid);
@@ -382,6 +402,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
 
             Collections.sort(children);
 
+            // select min
             int min = Integer.MAX_VALUE;
             for (BriefProcess c : children) {
                 int cTid = c.getTid();
@@ -392,6 +413,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
                 }
             }
 
+            // revise appropriate destination status after children proceeded..
             if (behind(tid, dst, min)) {
                 dst = nextActionDst(tid, min, true);
                 if (dst < 0) {

@@ -32,18 +32,18 @@ public abstract class AbstractStatusMachineStrategyService extends
                                                            AbstractStatusMachineParamService {
 
     protected List<StatusCache> statusP2C(int parentTemplateId, int childTemplateId,
-                                          int parentDestination) {
+                                          int parentStatus) {
         StatusRefMapping refMapping = statusRefMapping(parentTemplateId, childTemplateId);
         if (refMapping == null) {
             return Collections.emptyList();
         }
 
         Map<Integer, List<StatusCache>> p2cMapping = refMapping.getParent2Child();
-        if (CollectionUtils.isEmpty(p2cMapping) || !p2cMapping.containsKey(parentDestination)) {
+        if (CollectionUtils.isEmpty(p2cMapping) || !p2cMapping.containsKey(parentStatus)) {
             return Collections.emptyList();
         }
 
-        return p2cMapping.get(parentDestination);
+        return p2cMapping.get(parentStatus);
     }
 
     protected int statusC2P(int parentTemplateId, int childTemplateId, int childStatus) {
