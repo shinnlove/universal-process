@@ -20,9 +20,9 @@ public interface StatusMachineSmartService {
     ProcessContext smartProceedNext(int source, long refUniqueNo, DataContext dataContext,
                                     Consumer<ProcessContext> callback);
 
-    ProcessContext continuousProceed(long refUniqueNo, DataContext dataContext);
+    ProcessContext continuousDeduceProceed(long refUniqueNo, DataContext dataContext);
 
-    ProcessContext continuousProceed(long refUniqueNo, DataContext dataContext,
-                                     Consumer<ProcessContext> callback);
+    ProcessContext continuousDeduceProceed(long refUniqueNo, DataContext dataContext,
+                                           Consumer<ProcessContext> callback);
 
 }

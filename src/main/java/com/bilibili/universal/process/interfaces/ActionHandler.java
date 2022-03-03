@@ -107,21 +107,7 @@ public interface ActionHandler<T, R> extends BaseHandler {
         Class<?> handlerType = paramType();
         Object data = x.getDataContext().getData();
 
-        if (Objects.nonNull(data)) {
-            Class<?> dataClass = data.getClass();
-            if (!dataClass.isAssignableFrom(handlerType)) {
-                // search for inner type
-                for (Field f : dataClass.getDeclaredFields()) {
-                    Class<?> cls = f.getType();
-                    if (!isBasicType(cls) && cls.isAssignableFrom(handlerType)) {
-                        data = fValue(data, f);
-                        break;
-                    }
-                }
-            }
-        }
-
-        x.store(this, handlerType, data, true);
+        x.store(this, handlerType, deconstruction(data, handlerType), true);
         cache(c.getActionHandlers(), c.getIndex() - 1, process(c, x), x);
         c.process(x);
     }

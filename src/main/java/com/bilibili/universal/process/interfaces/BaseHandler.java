@@ -7,6 +7,7 @@ package com.bilibili.universal.process.interfaces;
 import static com.bilibili.universal.process.consts.MetadataConstant.*;
 
 import java.lang.reflect.Field;
+import java.util.Objects;
 
 import org.springframework.util.ReflectionUtils;
 
@@ -45,6 +46,23 @@ public interface BaseHandler {
 
     default boolean isBasicType(Class<?> clazz) {
         return isBasicType(clazz.getName());
+    }
+
+    default Object deconstruction(Object data, Class<?> handlerType) {
+        if (Objects.nonNull(data)) {
+            Class<?> dataClass = data.getClass();
+            if (!dataClass.isAssignableFrom(handlerType)) {
+                // search for inner type
+                for (Field f : dataClass.getDeclaredFields()) {
+                    Class<?> cls = f.getType();
+                    if (!isBasicType(cls) && cls.isAssignableFrom(handlerType)) {
+                        return fValue(data, f);
+                    }
+                }
+            }
+        }
+
+        return data;
     }
 
     default boolean isBasicType(String fieldTypeName) {

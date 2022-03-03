@@ -6,11 +6,11 @@ package com.bilibili.universal.process.service.impl;
 
 import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_STATUS;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-import com.bilibili.universal.process.model.cache.StatusCache;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -25,7 +25,6 @@ import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.model.process.UniversalProcess;
 import com.bilibili.universal.process.model.status.BriefProcess;
-import com.bilibili.universal.process.util.TplUtil;
 import com.bilibili.universal.util.common.AssertUtil;
 
 /**
@@ -282,14 +281,10 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
                                             Consumer<ProcessContext> callback) {
         // add some validator here..
 
+        DataContext pData = param.getParentDataContext();
         List<InitParam> inits = param.getParams();
         InitParam init = inits.get(0);
-        int ctId = init.getTemplateId();
-
-        TemplateCache cache = getCache(ctId);
-        int ptId = TplUtil.parentId(cache);
-
-        DataContext pData = param.getParentDataContext();
+        int ptId = childTplId2Parent(init.getTemplateId());
 
         long pRefNo = param.getParentRefUniqueNo();
         if (pRefNo == -1) {
@@ -340,18 +335,18 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         // add source status check..
         checkSourceStatus(current, source);
 
-        return continuousProceed(refUniqueNo, dataContext, callback);
+        return continuousDeduceProceed(refUniqueNo, dataContext, callback);
     }
 
     @Override
-    public ProcessContext continuousProceed(long refUniqueNo, DataContext dataContext) {
-        return continuousProceed(refUniqueNo, dataContext, resp -> {
+    public ProcessContext continuousDeduceProceed(long refUniqueNo, DataContext dataContext) {
+        return continuousDeduceProceed(refUniqueNo, dataContext, resp -> {
         });
     }
 
     @Override
-    public ProcessContext continuousProceed(long refUniqueNo, DataContext dataContext,
-                                            Consumer<ProcessContext> callback) {
+    public ProcessContext continuousDeduceProceed(long refUniqueNo, DataContext dataContext,
+                                                  Consumer<ProcessContext> callback) {
         UniversalProcess process = existRefProcess(refUniqueNo);
 
         int tid = process.getTemplateId();
@@ -367,58 +362,18 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         if (isParentTpl(tid)) {
 
             // begin deduce...
-
-            List<BriefProcess> children = new ArrayList<>();
-            List<UniversalProcess> refers = refChildren(refNo);
-            for (UniversalProcess c : refers) {
-                int cTid = c.getTemplateId();
-                int cStatus = c.getCurrentStatus();
-                int cDst = cStatus;
-
-                // add filter logic in ref child which status is not in refer status!
-                // in another words: parent's source status is beyond child status already
-                boolean involved = false;
-                List<StatusCache> refP2C = statusP2C(tid, cTid, src);
-                for (StatusCache sc : refP2C) {
-                    if (cStatus == sc.getNo()) {
-                        involved = true;
-                        break;
-                    }
-                }
-
-                if (involved) {
-                    // search nearest action for proceed.
-                    int aid = nearestAction(tid, dst, cTid, cStatus);
-                    if (aid > 0) {
-                        ActionCache action = getAction(aid);
-                        cDst = action.getDestination();
-                    }
-                }
-
-                children.add(new BriefProcess(cTid, cDst, getStatusSequence(cTid, cDst)));
-            }
-
-            Collections.sort(children);
+            List<BriefProcess> children = deduceParentProceed(tid, src, dst, refChildren(refNo));
 
             // select min
-            int min = Integer.MAX_VALUE;
-            for (BriefProcess c : children) {
-                int cTid = c.getTid();
+            int min = slowestC2PStatus(tid, children);
 
-                int pStatus = statusC2P(tid, cTid, c.getStatus());
-                if (pStatus < min) {
-                    min = pStatus;
-                }
-            }
-
-            // revise appropriate destination status after children proceeded..
+            // revise appropriate destination status after deduce children proceeded..
             if (behind(tid, dst, min)) {
                 dst = nextActionDst(tid, src, min, true);
                 if (dst < 0) {
                     return reject(tid, refNo, dataContext);
                 }
             }
-
         }
 
         // real selected appropriate action from source to destination

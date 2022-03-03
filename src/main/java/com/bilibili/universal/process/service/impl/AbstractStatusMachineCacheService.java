@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.bilibili.universal.process.model.cache.TemplateMetadata;
 import org.springframework.util.CollectionUtils;
 
 import com.bilibili.universal.process.enums.TemplateTriggerType;
@@ -123,6 +124,12 @@ public abstract class AbstractStatusMachineCacheService extends AbstractStatusMa
 
     protected List<ActionHandler> handlers(int actionId, boolean isSync) {
         return processMetadataService.getExecutions(actionId, isSync);
+    }
+
+    protected int childTplId2Parent(int childTemplateId){
+        TemplateCache cache = getCache(childTemplateId);
+        TemplateMetadata metadata = cache.getMetadata();
+        return metadata.getParentId();
     }
 
 }
