@@ -4,6 +4,8 @@
  */
 package com.bilibili.universal.process.service.impl;
 
+import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_STATUS;
+
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -92,22 +94,17 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
                             long parentRefUniqueNo, DataContext dataContext,
                             Consumer<ProcessContext> callback) {
         AssertUtil.largeThanValue(refUniqueNo, 0);
-        final int source = -1;
 
         TemplateCache template = getCache(templateId);
-
         Map<Integer, List<ActionHandler>> inits = template.getInitializers();
         if (CollectionUtils.isEmpty(inits) || !inits.containsKey(destination)) {
             return 0;
         }
-
+        // if contains key but no handler could still initialize process..
         List<ActionHandler> handlers = inits.get(destination);
-        if (CollectionUtils.isEmpty(handlers)) {
-            return 0;
-        }
 
         // 4th: prepare proceed context
-        ProcessContext context = buildContext(templateId, refUniqueNo, source, destination,
+        ProcessContext context = buildContext(templateId, refUniqueNo, DEFAULT_STATUS, destination,
             dataContext);
 
         // fast query once to check if it's a new process
@@ -120,8 +117,8 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
 
             // secondly create new process
             long newProcessId = createProcess(templateId, pno, refUniqueNo, parentRefUniqueNo,
-                source, destination, dataContext.getOperatorType(), dataContext.getOperatorId(),
-                dataContext.getOperator(), dataContext.getRemark());
+                DEFAULT_STATUS, destination, dataContext.getOperatorType(),
+                dataContext.getOperatorId(), dataContext.getOperator(), dataContext.getRemark());
 
             // Warning: give callback a chance to execute outta business codes, callback must after execute!
             if (callback != null) {
