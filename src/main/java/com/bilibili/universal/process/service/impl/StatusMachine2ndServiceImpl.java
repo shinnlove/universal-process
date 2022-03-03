@@ -324,15 +324,32 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
     }
 
     @Override
-    public ProcessContext smartProceedNext(long refUniqueNo, DataContext dataContext) {
-        return smartProceedNext(refUniqueNo, dataContext, resp -> {
+    public ProcessContext smartProceedNext(int source, long refUniqueNo, DataContext dataContext) {
+        return smartProceedNext(source, refUniqueNo, dataContext, resp -> {
         });
     }
 
     @Override
-    public ProcessContext smartProceedNext(long refUniqueNo, DataContext dataContext,
+    public ProcessContext smartProceedNext(int source, long refUniqueNo, DataContext dataContext,
                                            Consumer<ProcessContext> callback) {
+        UniversalProcess process = existRefProcess(refUniqueNo);
+        int current = process.getCurrentStatus();
 
+        // add source status check..
+        checkSourceStatus(current, source);
+
+        return continuousProceed(refUniqueNo, dataContext, callback);
+    }
+
+    @Override
+    public ProcessContext continuousProceed(long refUniqueNo, DataContext dataContext) {
+        return continuousProceed(refUniqueNo, dataContext, resp -> {
+        });
+    }
+
+    @Override
+    public ProcessContext continuousProceed(long refUniqueNo, DataContext dataContext,
+                                            Consumer<ProcessContext> callback) {
         UniversalProcess process = existRefProcess(refUniqueNo);
 
         int tid = process.getTemplateId();
@@ -394,5 +411,4 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         // execute after deduce
         return proceedProcess(aid, refNo, dataContext, callback);
     }
-
 }

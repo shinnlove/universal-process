@@ -15,9 +15,14 @@ import com.bilibili.universal.process.model.context.ProcessContext;
  */
 public interface StatusMachineSmartService {
 
-    ProcessContext smartProceedNext(long refUniqueNo, DataContext dataContext);
+    ProcessContext smartProceedNext(int source, long refUniqueNo, DataContext dataContext);
 
-    ProcessContext smartProceedNext(long refUniqueNo, DataContext dataContext,
+    ProcessContext smartProceedNext(int source, long refUniqueNo, DataContext dataContext,
                                     Consumer<ProcessContext> callback);
+
+    ProcessContext continuousProceed(long refUniqueNo, DataContext dataContext);
+
+    ProcessContext continuousProceed(long refUniqueNo, DataContext dataContext,
+                                     Consumer<ProcessContext> callback);
 
 }
