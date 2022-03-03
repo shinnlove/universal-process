@@ -31,4 +31,9 @@ public interface PipelineService {
     Object doPipeline(final int actionId, final DataContext dataContext,
                       final Consumer<ProcessContext> callback);
 
+    Object txPipeline(final int actionId, final DataContext dataContext);
+
+    Object txPipeline(final int actionId, final DataContext dataContext,
+                      final Consumer<ProcessContext> callback);
+
 }

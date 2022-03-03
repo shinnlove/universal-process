@@ -9,12 +9,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.CollectionUtils;
 
 import com.bilibili.universal.process.interfaces.ActionHandler;
@@ -28,6 +31,8 @@ import com.bilibili.universal.util.log.LoggerUtil;
 import javax.annotation.Resource;
 
 /**
+ * Pipeline service without status control.
+ * 
  * @author Tony Zhao
  * @version $Id: PipelineServiceImpl.java, v 0.1 2021-12-28 11:38 PM Tony Zhao Exp $$
  */
@@ -40,6 +45,10 @@ public class PipelineServiceImpl implements PipelineService {
     @Resource
     @Qualifier("pipelinePool")
     private ExecutorService        executor;
+
+    /** transaction template */
+    @Resource
+    private TransactionTemplate    transactionTemplate;
 
     /** process template and status metadata autowired service */
     @Autowired
@@ -66,6 +75,18 @@ public class PipelineServiceImpl implements PipelineService {
         }
 
         return context;
+    }
+
+    @Override
+    public Object txPipeline(int actionId, DataContext dataContext) {
+        return txPipeline(actionId, dataContext, resp -> {
+        });
+    }
+
+    @Override
+    public Object txPipeline(int actionId, DataContext dataContext,
+                             Consumer<ProcessContext> callback) {
+        return tx(status -> doPipeline(actionId, dataContext, callback));
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -102,6 +123,10 @@ public class PipelineServiceImpl implements PipelineService {
             LoggerUtil.error(logger, e, e);
         }
         return null;
+    }
+
+    protected <R> R tx(final Function<TransactionStatus, R> function) {
+        return transactionTemplate.execute(status -> function.apply(status));
     }
 
 }
