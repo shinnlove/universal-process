@@ -386,15 +386,13 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
                     }
                 }
 
-                if (!involved) {
-                    continue;
-                }
-
-                // search nearest action for proceed.
-                int aid = nearestAction(tid, dst, cTid, cStatus);
-                if (aid > 0) {
-                    ActionCache action = getAction(aid);
-                    cDst = action.getDestination();
+                if (involved) {
+                    // search nearest action for proceed.
+                    int aid = nearestAction(tid, dst, cTid, cStatus);
+                    if (aid > 0) {
+                        ActionCache action = getAction(aid);
+                        cDst = action.getDestination();
+                    }
                 }
 
                 children.add(new BriefProcess(cTid, cDst, getStatusSequence(cTid, cDst)));
