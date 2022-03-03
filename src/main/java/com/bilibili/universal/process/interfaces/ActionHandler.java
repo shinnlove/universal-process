@@ -55,7 +55,8 @@ public interface ActionHandler<T, R> extends BaseHandler {
     @SuppressWarnings("rawtypes")
     default void cache(final List<ActionHandler> handlers, final int index, final R result,
                        ProcessContext<T> x) {
-        x.store(handlers.get(index), result.getClass(), result, false);
+        Class<?> clazz = result == null ? Void.class : result.getClass();
+        x.store(handlers.get(index), clazz, result, false);
     }
 
     /**
@@ -89,7 +90,11 @@ public interface ActionHandler<T, R> extends BaseHandler {
             .orElse(null);
         Object o = Optional.ofNullable(x.getResultObject().get(cn)).orElse(null);
 
-        return cast(c, o);
+        if (Objects.nonNull(o)) {
+            return cast(c, o);
+        }
+
+        return null;
     }
 
     /**

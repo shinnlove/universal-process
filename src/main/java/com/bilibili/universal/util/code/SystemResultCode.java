@@ -43,6 +43,12 @@ public enum SystemResultCode implements BaseEnum {
     /** 数据SQL执行出错 */
     DB_EXECUTE_ERROR("10008", "数据SQL执行出错"),
 
+    /** 流程处理器业务参数和结果出现NPE */
+    BIZ_PARAM_RESULT_NPE("10009", "业务流程处理器业务参数和结果出现NPE"),
+
+    /** 业务处理器执行出错 */
+    BIZ_HANDLER_EXECUTE_ERROR("10010", "业务处理器执行出错"),
+
     ;
 
     /** 错误码 */
