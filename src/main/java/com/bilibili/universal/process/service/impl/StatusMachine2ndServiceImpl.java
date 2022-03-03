@@ -358,7 +358,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         long refNo = process.getRefUniqueNo();
         int src = process.getCurrentStatus();
 
-        int dst = nextActionDst(tid, src, false);
+        int dst = nextActionDst(tid, src, src, false);
         if (dst < 0) {
             return reject(tid, refNo, dataContext);
         }
@@ -415,7 +415,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
 
             // revise appropriate destination status after children proceeded..
             if (behind(tid, dst, min)) {
-                dst = nextActionDst(tid, min, true);
+                dst = nextActionDst(tid, src, min, true);
                 if (dst < 0) {
                     return reject(tid, refNo, dataContext);
                 }

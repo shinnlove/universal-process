@@ -22,22 +22,22 @@ import com.bilibili.universal.process.model.context.ProcessContext;
 public abstract class AbstractStatusMachineSmartStrategyService extends
                                                                 AbstractStatusMachineStrategyService {
 
-    protected int nextActionDst(int templateId, int current, boolean contains) {
+    protected int nextActionDst(int templateId, int current, int min, boolean contains) {
         TemplateCache template = getCache(templateId);
         StatusCache[] arr = template.getStatusArray();
 
-        int currentSeq = getStatusSequence(arr, current);
-        int statusNo = current;
+        int minSeq = getStatusSequence(arr, min);
+        int statusNo = min;
 
         while (statusNo > 0) {
-            statusNo = nextSequenceStatus(arr, currentSeq, contains);
+            statusNo = nextSequenceStatus(arr, minSeq, contains);
 
             ActionCache cache = getAction(templateId, current, statusNo);
             if (Objects.nonNull(cache)) {
                 return cache.getDestination();
             }
 
-            currentSeq += 1;
+            minSeq += 1;
         }
 
         return DEFAULT_ACTION_ID;
