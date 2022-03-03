@@ -389,13 +389,13 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
 
         // real selected appropriate action from source to destination
         int aid = getActionId(tid, src, dst);
-        if (aid > 0) {
-            // execute after deduce
-            return proceedProcess(aid, refNo, dataContext, callback);
+        if (aid <= 0) {
+            // missing appropriate action id here
+            return reject(tid, refNo, dataContext);
         }
 
-        // missing appropriate action id here
-        return reject(tid, refNo, dataContext);
+        // execute after deduce
+        return proceedProcess(aid, refNo, dataContext, callback);
     }
 
 }
