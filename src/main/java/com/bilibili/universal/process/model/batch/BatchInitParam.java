@@ -48,6 +48,24 @@ public class BatchInitParam implements Serializable {
         this.params = params;
     }
 
+    /**
+     * Constructor with parent data context and initialize params.
+     * 
+     * @param parentDataContext 
+     * @param params
+     */
+    public BatchInitParam(DataContext parentDataContext, List<InitParam> params) {
+        this.parentDataContext = parentDataContext;
+        this.params = params;
+    }
+
+    /**
+     * Constructor with all arguments.
+     * 
+     * @param parentRefUniqueNo 
+     * @param parentDataContext
+     * @param params
+     */
     public BatchInitParam(long parentRefUniqueNo, DataContext parentDataContext,
                           List<InitParam> params) {
         this.parentRefUniqueNo = parentRefUniqueNo;
