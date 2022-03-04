@@ -22,6 +22,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.bilibili.universal.process.consts.XmlParseConstant;
 import com.bilibili.universal.util.log.LoggerUtil;
 
 import javax.sql.DataSource;
@@ -34,11 +35,7 @@ import javax.sql.DataSource;
 @MapperScan(basePackages = { "com.bilibili.universal.dao" }, sqlSessionTemplateRef = "sqlSessionTemplate")
 public class DatabaseConfig implements EnvironmentAware {
 
-    private static final Logger logger     = LoggerFactory.getLogger(DatabaseConfig.class);
-
-    private static final String MAPPER     = "classpath*:META-INF/mapper/*.xml";
-
-    private static final String EXT_MAPPER = "classpath*:META-INF/mapper/ext/*.xml";
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseConfig.class);
 
     private Environment         environment;
 
@@ -64,12 +61,10 @@ public class DatabaseConfig implements EnvironmentAware {
         bean.setDataSource(dataSource);
         try {
             ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            Resource[] resources = resolver.getResources(MAPPER);
-            Resource[] extResources = resolver.getResources(EXT_MAPPER);
+            Resource[] resources = resolver.getResources(XmlParseConstant.MAPPER);
 
-            Resource[] combination = new Resource[resources.length + extResources.length];
+            Resource[] combination = new Resource[resources.length];
             System.arraycopy(resources, 0, combination, 0, resources.length);
-            System.arraycopy(extResources, 0, combination, resources.length, extResources.length);
 
             bean.setMapperLocations(combination);
             return bean.getObject();

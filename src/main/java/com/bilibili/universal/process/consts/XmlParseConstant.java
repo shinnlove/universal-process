@@ -20,7 +20,11 @@ public final class XmlParseConstant {
 
     public static final String UNDERSCORE                = "_";
 
-    public static final String TEMPLATE_PATH             = "classpath:META-INF/process/*.xml";
+    /** only needs mybatis xml file in this jar, so use only classpath ! */
+    public static final String MAPPER                    = "classpath:META-INF/mapper/*.xml";
+
+    /** VIP: process template xml file is under biz system, need classpath* ! */
+    public static final String TEMPLATE_PATH             = "classpath*:META-INF/process/*.xml";
 
     public static final String SECTION_ROOT_METADATA     = "metadata";
 
