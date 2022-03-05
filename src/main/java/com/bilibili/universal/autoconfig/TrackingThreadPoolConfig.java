@@ -8,6 +8,7 @@ import static com.bilibili.universal.util.consts.ThreadPoolConstants.*;
 
 import java.util.concurrent.ExecutorService;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,6 +29,7 @@ public class TrackingThreadPoolConfig {
      * @return
      */
     @Bean("xxlTrackingPool")
+    @ConditionalOnMissingBean(name = "xxlTrackingPool")
     public ExecutorService initXxlJobPool() {
         return ThreadUtils.createPool(XXL_JOB_THREAD_POOL_NAME, XXL_JOB_THREAD_POOL_NUM);
     }
@@ -38,6 +40,7 @@ public class TrackingThreadPoolConfig {
      * @return
      */
     @Bean("tagConsumePool")
+    @ConditionalOnMissingBean(name = "tagConsumePool")
     public ExecutorService initTagConsumePool() {
         return ThreadUtils.createPool(TAG_CONSUME_POOL_NAME, TAG_CONSUME_POOL_NUM);
     }
@@ -63,6 +66,7 @@ public class TrackingThreadPoolConfig {
      * @return
      */
     @Bean("notifyPool")
+    @ConditionalOnMissingBean(name = "notifyPool")
     public ExecutorService initNotifyPool() {
         return ThreadUtils.createPool(NOTIFY_THREAD_POOL_NAME, NOTIFY_THREAD_POOL_NUM);
     }
@@ -73,6 +77,7 @@ public class TrackingThreadPoolConfig {
      * @return
      */
     @Bean("mailPool")
+    @ConditionalOnMissingBean(name = "mailPool")
     public ExecutorService initMailPool() {
         return ThreadUtils.createPool(MAIL_THREAD_POOL_NAME, MAIL_THREAD_POOL_CORE_NUM,
             MAIL_THREAD_POOL_MAX_NUM, MAIL_THREAD_POOL_QUEUE_SIZE);

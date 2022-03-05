@@ -28,6 +28,8 @@ import com.bilibili.universal.util.log.LoggerUtil;
 import javax.sql.DataSource;
 
 /**
+ * Universal process database autowire config bean.
+ * 
  * @author Tony Zhao
  * @version $Id: DatabaseConfig.java, v 0.1 2022-02-17 3:34 PM Tony Zhao Exp $$
  */
