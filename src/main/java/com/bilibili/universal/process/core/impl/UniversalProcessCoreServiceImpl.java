@@ -12,7 +12,6 @@ import org.springframework.util.CollectionUtils;
 
 import com.bilibili.universal.dao.UniversalProcessDao;
 import com.bilibili.universal.dao.ext.UniversalProcessExtDao;
-import com.bilibili.universal.dao.model.UniversalProcessExtPo;
 import com.bilibili.universal.dao.model.UniversalProcessPo;
 import com.bilibili.universal.dao.model.UniversalProcessPoExample;
 import com.bilibili.universal.process.core.UniversalProcessCoreService;
@@ -88,7 +87,7 @@ public class UniversalProcessCoreServiceImpl implements UniversalProcessCoreServ
 
     @Override
     public UniversalProcess getProcessByRefUniqueNo(long refUniqueNo, boolean lock) {
-        UniversalProcessExtPo po = null;
+        UniversalProcessPo po = null;
         if (lock) {
             po = universalProcessExtDao.selectByRefUniqueNoForUpdate(refUniqueNo);
         } else {
@@ -99,7 +98,7 @@ public class UniversalProcessCoreServiceImpl implements UniversalProcessCoreServ
 
             List<UniversalProcessPo> pos = universalProcessDao.selectByExample(example);
             if (!CollectionUtils.isEmpty(pos)) {
-                return CommonUtil.copyObj(pos.get(0), UniversalProcess.class);
+                po = pos.get(0);
             }
         }
         return CommonUtil.copyObj(po, UniversalProcess.class);
@@ -107,7 +106,7 @@ public class UniversalProcessCoreServiceImpl implements UniversalProcessCoreServ
 
     @Override
     public UniversalProcess lockProcessByProcessNo(long processNo) {
-        UniversalProcessExtPo po = universalProcessExtDao.selectByProcessNoForUpdate(processNo);
+        UniversalProcessPo po = universalProcessExtDao.selectByProcessNoForUpdate(processNo);
         return CommonUtil.copyObj(po, UniversalProcess.class);
     }
 
