@@ -20,36 +20,36 @@ import com.bilibili.universal.process.interfaces.ActionHandler;
  * @version $Id: ProcessContext.java, v 0.1 2021-07-06 4:14 PM Tony Zhao Exp $$
  */
 public class ProcessContext<T> implements Serializable {
-    private static final long         serialVersionUID  = 7468705719318252352L;
+    private static final long            serialVersionUID  = 7468705719318252352L;
 
     /** process template id and action id */
-    private int                       templateId        = -1;
-    private int                       actionId          = -1;
+    private int                          templateId        = -1;
+    private int                          actionId          = -1;
 
     /** process No. and reference business No. */
-    private long                      processNo         = -1;
-    private long                      refUniqueNo       = -1;
+    private long                         processNo         = -1;
+    private long                         refUniqueNo       = -1;
 
     /** check source and destination status */
-    private int                       sourceStatus      = -1;
-    private int                       destinationStatus = -1;
+    private int                          sourceStatus      = -1;
+    private int                          destinationStatus = -1;
 
     /** the generic parameter pass through a process to do business */
-    private DataContext<T>            dataContext;
+    private DataContext<T>               dataContext;
 
     /** a input param map for reflect each handler's input. */
-    private Map<String, Class<?>>     inputClass        = new HashMap<>();
-    private Map<String, Object>       inputObject       = new HashMap<>();
+    private Map<String, Class<?>>        inputClass        = new HashMap<>();
+    private Map<String, Object>          inputObject       = new HashMap<>();
 
     /** a result map for storing handler's execute result and its type. */
-    private Map<String, Class<?>>     resultClass       = new HashMap<>();
-    private Map<String, Object>       resultObject      = new HashMap<>();
+    private Map<String, Class<?>>        resultClass       = new HashMap<>();
+    private Map<String, Object>          resultObject      = new HashMap<>();
 
     /** parent context if needs to proceed parent */
-    private ProcessContext            parentContext;
+    private ProcessContext               parentContext;
 
-    /** children context if needs to proceed children, refUniqueNo => context */
-    private Map<Long, ProcessContext> childrenContext   = new HashMap<>();
+    /** children context if needs to proceed children, template id => context */
+    private Map<Integer, ProcessContext> childrenContext   = new HashMap<>();
 
     /**
      * Constructor for reflect.
@@ -188,12 +188,18 @@ public class ProcessContext<T> implements Serializable {
         this.parentContext = parentContext;
     }
 
-    public Map<Long, ProcessContext> getChildrenContext() {
+    public Map<Integer, ProcessContext> getChildrenContext() {
         return childrenContext;
     }
 
-    public void setChildrenContext(Map<Long, ProcessContext> childrenContext) {
+    public void setChildrenContext(Map<Integer, ProcessContext> childrenContext) {
         this.childrenContext = childrenContext;
+    }
+
+    public void addChildContext(int templateId, ProcessContext context) {
+        if (!childrenContext.containsKey(templateId)) {
+            childrenContext.put(templateId, context);
+        }
     }
 
     public void parent(ProcessContext parentContext) {
@@ -201,9 +207,9 @@ public class ProcessContext<T> implements Serializable {
     }
 
     public void children(ProcessContext childContext) {
-        long refUniqueNo = childContext.getRefUniqueNo();
-        if (!childrenContext.containsKey(refUniqueNo)) {
-            childrenContext.put(refUniqueNo, childContext);
+        int templateId = childContext.getTemplateId();
+        if (!childrenContext.containsKey(templateId)) {
+            childrenContext.put(templateId, childContext);
         }
     }
 

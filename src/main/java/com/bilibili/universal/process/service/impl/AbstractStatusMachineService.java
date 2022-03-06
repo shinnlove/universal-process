@@ -5,6 +5,7 @@
 package com.bilibili.universal.process.service.impl;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -240,16 +241,32 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
     protected ProcessContext buildContext(int templateId, int actionId, long refUniqueNo,
                                           long parentRefUniqueNo, int source, int destination,
                                           DataContext dataContext) {
-        ProcessContext childContext = buildContext(templateId, actionId, refUniqueNo, source,
+        ProcessContext context = buildContext(templateId, actionId, refUniqueNo, source,
             destination, dataContext);
 
+        // just for initialize:
+        // Case A: when has parent process, set parent ref unique no for children to read 
         if (parentRefUniqueNo > 0) {
-            ProcessContext context = new ProcessContext();
-            context.setRefUniqueNo(parentRefUniqueNo);
-            childContext.setParentContext(context);
+            ProcessContext c = new ProcessContext();
+            c.setRefUniqueNo(parentRefUniqueNo);
+            context.setParentContext(c);
         }
 
-        return childContext;
+        // Case B: when has children processes, set children unique no for parent to read
+        if (!CollectionUtils.isEmpty(dataContext.getChildrenDataContext())) {
+            Map<Integer, DataContext> children = dataContext.getChildrenDataContext();
+            for (Map.Entry<Integer, DataContext> entry : children.entrySet()) {
+                int tplId = entry.getKey();
+                DataContext child = entry.getValue();
+
+                ProcessContext c = new ProcessContext();
+                c.setRefUniqueNo(child.getRefUniqueNo());
+
+                context.addChildContext(tplId, c);
+            }
+        }
+
+        return context;
     }
 
     protected void checkSourceStatus(int currentStatus, int source) {

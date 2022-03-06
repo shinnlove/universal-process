@@ -308,6 +308,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
                 }
 
                 processNos.put(id, no);
+                pData.setChildren(id, cd);
             });
 
             BriefProcess slowest = slowestChildrenStatus(refChildren(pno));

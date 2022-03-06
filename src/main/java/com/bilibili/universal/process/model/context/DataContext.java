@@ -32,26 +32,32 @@ import com.bilibili.universal.process.interfaces.ActionHandler;
  * @version $Id: DataContext.java, v 0.1 2021-07-22 11:53 AM Tony Zhao Exp $$
  */
 public class DataContext<T> implements Serializable {
-    private static final long   serialVersionUID = -2019461634360608165L;
+    private static final long         serialVersionUID    = -2019461634360608165L;
+
+    /** give outta system a change to diy ref unique no */
+    private long                      refUniqueNo         = -1;
 
     /** generic data passed by business code */
-    private T                   data;
+    private T                         data;
 
     /** An generic object for business handler to put data in it. A list of handler execute result hold by context! */
     @Deprecated
-    private Map<String, Object> handlerResult    = new HashMap<>();
+    private Map<String, Object>       handlerResult       = new HashMap<>();
 
     /** the process proceed operator type */
-    private int                 operatorType     = DEFAULT_OPERATOR_TYPE;
+    private int                       operatorType        = DEFAULT_OPERATOR_TYPE;
 
     /** the process proceed operator id */
-    private long                operatorId       = DEFAULT_OPERATOR_ID;
+    private long                      operatorId          = DEFAULT_OPERATOR_ID;
 
     /** the process proceed operator and default is system. */
-    private String              operator         = DEFAULT_OPERATOR;
+    private String                    operator            = DEFAULT_OPERATOR;
 
     /** The remark each process need to comment. */
-    private String              remark           = DEFAULT_REMARK;
+    private String                    remark              = DEFAULT_REMARK;
+
+    /** if parent process, holds children data context. template id => data context */
+    private Map<Integer, DataContext> childrenDataContext = new HashMap<>();
 
     /**
      * Constructor for reflect.
@@ -84,6 +90,14 @@ public class DataContext<T> implements Serializable {
         this.operatorId = operatorId;
         this.operator = operator;
         this.remark = remark;
+    }
+
+    public long getRefUniqueNo() {
+        return refUniqueNo;
+    }
+
+    public void setRefUniqueNo(long refUniqueNo) {
+        this.refUniqueNo = refUniqueNo;
     }
 
     public T getData() {
@@ -132,6 +146,16 @@ public class DataContext<T> implements Serializable {
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public Map<Integer, DataContext> getChildrenDataContext() {
+        return childrenDataContext;
+    }
+
+    public void setChildren(int templateId, DataContext dataContext) {
+        if (!childrenDataContext.containsKey(templateId)) {
+            childrenDataContext.put(templateId, dataContext);
+        }
     }
 
     /**
