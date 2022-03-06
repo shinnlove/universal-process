@@ -229,6 +229,29 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return context;
     }
 
+    @SuppressWarnings("rawtypes")
+    protected ProcessContext buildContext(int templateId, long refUniqueNo, long parentRefUniqueNo,
+                                          int source, int destination, DataContext dataContext) {
+        return buildContext(templateId, -1, refUniqueNo, parentRefUniqueNo, source, destination,
+            dataContext);
+    }
+
+    @SuppressWarnings("rawtypes")
+    protected ProcessContext buildContext(int templateId, int actionId, long refUniqueNo,
+                                          long parentRefUniqueNo, int source, int destination,
+                                          DataContext dataContext) {
+        ProcessContext childContext = buildContext(templateId, actionId, refUniqueNo, source,
+            destination, dataContext);
+
+        if (parentRefUniqueNo > 0) {
+            ProcessContext context = new ProcessContext();
+            context.setRefUniqueNo(parentRefUniqueNo);
+            childContext.setParentContext(context);
+        }
+
+        return childContext;
+    }
+
     protected void checkSourceStatus(int currentStatus, int source) {
         // -1 represents universal status.
         if (source != -1 && currentStatus != source) {

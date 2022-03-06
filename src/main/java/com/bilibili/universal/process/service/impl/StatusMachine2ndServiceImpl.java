@@ -105,8 +105,8 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         List<ActionHandler> handlers = inits.get(destination);
 
         // 4th: prepare proceed context
-        ProcessContext context = buildContext(templateId, refUniqueNo, DEFAULT_STATUS, destination,
-            dataContext);
+        ProcessContext context = buildContext(templateId, refUniqueNo, parentRefUniqueNo,
+            DEFAULT_STATUS, destination, dataContext);
 
         // fast query once to check if it's a new process
         notExistRefProcess(refUniqueNo);
