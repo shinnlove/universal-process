@@ -227,6 +227,10 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
             }
         }
         context.setDataContext(dataContext);
+
+        // VIP: back fill
+        dataContext.setRefUniqueNo(refUniqueNo);
+
         return context;
     }
 
