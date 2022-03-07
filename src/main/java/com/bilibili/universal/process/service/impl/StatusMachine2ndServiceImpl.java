@@ -111,14 +111,12 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         // fast query once to check if it's a new process
         notExistRefProcess(refUniqueNo);
 
-        final long pno = nextId();
-
         Long processId = tx(status -> {
             execute(context, handlers);
 
             // secondly create new process
-            long newProcessId = createProcess(templateId, pno, refUniqueNo, parentRefUniqueNo,
-                DEFAULT_STATUS, destination, dataContext.getOperatorType(),
+            long newProcessId = createProcess(templateId, refUniqueNo, refUniqueNo,
+                parentRefUniqueNo, DEFAULT_STATUS, destination, dataContext.getOperatorType(),
                 dataContext.getOperatorId(), dataContext.getOperator(), dataContext.getRemark());
 
             // Warning: give callback a chance to execute outta business codes, callback must after execute!
@@ -133,7 +131,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
 
         runAsync(context, triggers(templateId, destination));
 
-        return pno;
+        return refUniqueNo;
     }
 
     @SuppressWarnings("rawtypes")
