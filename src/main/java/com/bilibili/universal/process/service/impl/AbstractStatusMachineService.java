@@ -4,21 +4,20 @@
  */
 package com.bilibili.universal.process.service.impl;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.lang.reflect.Field;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ReflectionUtils;
 
 import com.bilibili.universal.process.consts.MachineConstant;
 import com.bilibili.universal.process.core.ProcessBlockingCoreService;
@@ -34,6 +33,7 @@ import com.bilibili.universal.process.no.SnowflakeIdWorker;
 import com.bilibili.universal.process.service.ActionExecutor;
 import com.bilibili.universal.process.service.ProcessMetadataService;
 import com.bilibili.universal.process.service.StatusMachine2ndService;
+import com.bilibili.universal.process.wrap.ReflectWrapWithResult;
 import com.bilibili.universal.util.code.SystemResultCode;
 import com.bilibili.universal.util.common.AssertUtil;
 import com.bilibili.universal.util.exception.SystemException;
@@ -212,6 +212,7 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         ProcessContext context = new ProcessContext();
         context.setTemplateId(templateId);
         context.setActionId(actionId);
+        // current context ref unique no
         context.setRefUniqueNo(refUniqueNo);
         context.setSourceStatus(source);
         context.setDestinationStatus(destination);
@@ -220,11 +221,8 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         if (Objects.isNull(dataContext)) {
             dataContext = new DataContext();
         } else {
-            Object data = dataContext.getData();
-            if (Objects.nonNull(data)) {
-                // pickup operator info..
-                BeanUtils.copyProperties(data, dataContext);
-            }
+            // directly copy
+            reflectCopyData(dataContext.getData(), dataContext);
         }
         context.setDataContext(dataContext);
 
@@ -232,6 +230,65 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         dataContext.setRefUniqueNo(refUniqueNo);
 
         return context;
+    }
+
+    @SuppressWarnings("rawtypes")
+    private void reflectCopyData(Object bizData, DataContext dataContext) {
+        if (Objects.nonNull(bizData) && Objects.nonNull(bizData.getClass())
+            && !bizData.getClass().equals(Object.class)) {
+
+            Class<?> clazz = bizData.getClass();
+            Field[] fields = clazz.getDeclaredFields();
+
+            Set<String> fSet = new HashSet<>();
+            fSet.add("operatorType");
+            fSet.add("operatorId");
+            fSet.add("operator");
+            fSet.add("remark");
+
+            for (Field f : fields) {
+                String fName = f.getName();
+                if (!fSet.contains(fName)) {
+                    continue;
+                }
+                Object v = fValue(bizData, f);
+
+                try {
+                    if ("operatorType".equals(fName)) {
+                        dataContext.setOperatorType(Integer.parseInt(String.valueOf(v)));
+                    } else if ("operatorId".equals(fName)) {
+                        dataContext.setOperatorId(Long.parseLong(String.valueOf(v)));
+                    } else if ("operator".equals(fName)) {
+                        dataContext.setOperator(String.valueOf(v));
+                    } else if ("remark".equals(fName)) {
+                        dataContext.setOperator(String.valueOf(v));
+                    }
+                } catch (Exception e) {
+
+                }
+            }
+        }
+    }
+
+    private Object fValue(final Object o, final Field f) {
+        if (o == null || f == null) {
+            return null;
+        }
+        ReflectionUtils.makeAccessible(f);
+        return reflect(() -> f.get(o));
+    }
+
+    private Object reflect(ReflectWrapWithResult wrap) {
+        try {
+            return wrap.call();
+        } catch (IllegalAccessException e) {
+
+        } catch (NoSuchFieldException e) {
+
+        } catch (Exception e) {
+
+        }
+        return null;
     }
 
     @SuppressWarnings("rawtypes")

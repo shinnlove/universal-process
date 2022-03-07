@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -293,21 +294,23 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         final Map<Integer, Long> processNos = new HashMap<>();
         tx(status -> {
 
-            inits.forEach(i -> {
+            for (InitParam i : inits) {
                 int id = i.getTemplateId();
                 long cRefNo = i.getRefUniqueNo();
-                DataContext cd = i.getDataContext();
-                long no;
+                final DataContext cd = new DataContext();
+
+                // VIP: should copy, otherwise will recursive did wrong to data reference!
+                BeanUtils.copyProperties(i.getDataContext(), cd);
 
                 if (i.getDst() > 0) {
-                    no = initProcess(id, i.getDst(), cRefNo, pno, cd);
+                    initProcess(id, i.getDst(), cRefNo, pno, cd);
                 } else {
-                    no = initProcess(id, cRefNo, pno, cd);
+                    initProcess(id, cRefNo, pno, cd);
                 }
 
-                processNos.put(id, no);
+                processNos.put(id, cRefNo);
                 pData.setChildren(id, cd);
-            });
+            }
 
             BriefProcess slowest = slowestChildrenStatus(refChildren(pno));
             // VIP: pls use slowest template id and its current status do ref mapping!!
