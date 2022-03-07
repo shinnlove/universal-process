@@ -30,6 +30,14 @@ public final class MachineConstant {
 
     public static final String DEFAULT_REMARK              = "System delegate to initialize or proceed the process.";
 
+    public static final String OPERATOR_TYPE               = "operatorType";
+
+    public static final String OPERATOR_ID                 = "operatorId";
+
+    public static final String OPERATOR                    = "operator";
+
+    public static final String REMARK                      = "remark";
+
     public static final String NO_PROCESS_IN_SYSTEM        = "不存在对应的业务流程";
 
     public static final String SOURCE_STATUS_INCORRECT     = "template_id/action_id起始变迁状态不符";

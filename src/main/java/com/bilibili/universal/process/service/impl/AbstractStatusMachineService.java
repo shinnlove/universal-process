@@ -4,6 +4,8 @@
  */
 package com.bilibili.universal.process.service.impl;
 
+import static com.bilibili.universal.process.consts.MachineConstant.*;
+
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -49,8 +51,18 @@ import javax.annotation.Resource;
  */
 public abstract class AbstractStatusMachineService implements StatusMachine2ndService {
 
-    private static final Logger         logger = LoggerFactory
+    private static final Logger      logger       = LoggerFactory
         .getLogger(AbstractStatusMachineService.class);
+
+    /** search fields */
+    private static final Set<String> searchFields = new HashSet<>();
+
+    static {
+        searchFields.add(OPERATOR_TYPE);
+        searchFields.add(OPERATOR_ID);
+        searchFields.add(OPERATOR);
+        searchFields.add(REMARK);
+    }
 
     /** thread executor */
     @Autowired
@@ -240,28 +252,22 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
             Class<?> clazz = bizData.getClass();
             Field[] fields = clazz.getDeclaredFields();
 
-            Set<String> fSet = new HashSet<>();
-            fSet.add("operatorType");
-            fSet.add("operatorId");
-            fSet.add("operator");
-            fSet.add("remark");
-
             for (Field f : fields) {
                 String fName = f.getName();
-                if (!fSet.contains(fName)) {
+                if (!searchFields.contains(fName)) {
                     continue;
                 }
                 Object v = fValue(bizData, f);
 
                 try {
-                    if ("operatorType".equals(fName)) {
+                    if (OPERATOR_TYPE.equals(fName)) {
                         dataContext.setOperatorType(Integer.parseInt(String.valueOf(v)));
-                    } else if ("operatorId".equals(fName)) {
+                    } else if (OPERATOR_ID.equals(fName)) {
                         dataContext.setOperatorId(Long.parseLong(String.valueOf(v)));
-                    } else if ("operator".equals(fName)) {
+                    } else if (OPERATOR.equals(fName)) {
                         dataContext.setOperator(String.valueOf(v));
-                    } else if ("remark".equals(fName)) {
-                        dataContext.setOperator(String.valueOf(v));
+                    } else if (REMARK.equals(fName)) {
+                        dataContext.setRemark(String.valueOf(v));
                     }
                 } catch (Exception e) {
 
