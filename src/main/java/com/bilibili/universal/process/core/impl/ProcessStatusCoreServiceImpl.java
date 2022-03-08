@@ -4,6 +4,8 @@
  */
 package com.bilibili.universal.process.core.impl;
 
+import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_ACTION_ID;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -53,8 +55,8 @@ public class ProcessStatusCoreServiceImpl implements ProcessStatusCoreService {
 
         long processId = universalProcessCoreService.addProcess(uProcess);
 
-        ProcessStatusLog statusLog = new ProcessStatusLog(processNo, templateId, -1, source,
-            destination, operatorType, operatorId, operator, remark);
+        ProcessStatusLog statusLog = new ProcessStatusLog(processNo, templateId, DEFAULT_ACTION_ID,
+            source, destination, operatorType, operatorId, operator, remark);
         processStatusLogCoreService.insertProcessLog(statusLog);
 
         return processId;

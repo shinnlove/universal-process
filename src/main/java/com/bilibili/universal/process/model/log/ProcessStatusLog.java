@@ -4,8 +4,8 @@
  */
 package com.bilibili.universal.process.model.log;
 
-
 import java.io.Serializable;
+import java.sql.Timestamp;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -19,18 +19,30 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 public class ProcessStatusLog implements Serializable {
     private static final long serialVersionUID = 8750756148087424050L;
 
+    /** 流程唯一unique No. */
     private long              processNo;
 
+    /** 模版id */
     private int               templateId;
+    /** 动作id */
     private int               actionId;
 
+    /** 源状态 */
     private int               sourceStatus;
+    /** 目标状态 */
     private int               destinationStatus;
 
+    /** 流程操作人类型 */
     private int               operatorType;
+    /** 流程操作人id */
     private long              operatorId;
+    /** 流程操作人名称 */
     private String            operator;
 
+    /** 创建时间 */
+    private Timestamp         ctime;
+
+    /** 更新时间 */
     private String            remark;
 
     /**
@@ -53,7 +65,7 @@ public class ProcessStatusLog implements Serializable {
     }
 
     /**
-     * Constructor with all arguments.
+     * Constructor with all arguments except ctime.
      * 
      * @param processNo 
      * @param templateId
@@ -141,6 +153,14 @@ public class ProcessStatusLog implements Serializable {
 
     public void setOperator(String operator) {
         this.operator = operator;
+    }
+
+    public Timestamp getCtime() {
+        return ctime;
+    }
+
+    public void setCtime(Timestamp ctime) {
+        this.ctime = ctime;
     }
 
     public String getRemark() {
