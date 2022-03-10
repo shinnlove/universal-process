@@ -245,6 +245,45 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
     }
 
     @SuppressWarnings("rawtypes")
+    protected ProcessContext buildContext(int templateId, long refUniqueNo, long parentRefUniqueNo,
+                                          int source, int destination, DataContext dataContext) {
+        return buildContext(templateId, -1, refUniqueNo, parentRefUniqueNo, source, destination,
+            dataContext);
+    }
+
+    @SuppressWarnings("rawtypes")
+    protected ProcessContext buildContext(int templateId, int actionId, long refUniqueNo,
+                                          long parentRefUniqueNo, int source, int destination,
+                                          DataContext dataContext) {
+        ProcessContext context = buildContext(templateId, actionId, refUniqueNo, source,
+            destination, dataContext);
+
+        // just for initialize:
+        // Case A: when has parent process, set parent ref unique no for children to read 
+        if (parentRefUniqueNo > 0) {
+            ProcessContext c = new ProcessContext();
+            c.setRefUniqueNo(parentRefUniqueNo);
+            context.setParentContext(c);
+        }
+
+        // Case B: when has children processes, set children unique no for parent to read
+        if (!CollectionUtils.isEmpty(dataContext.getChildrenDataContext())) {
+            Map<Integer, DataContext> children = dataContext.getChildrenDataContext();
+            for (Map.Entry<Integer, DataContext> entry : children.entrySet()) {
+                int tplId = entry.getKey();
+                DataContext child = entry.getValue();
+
+                ProcessContext c = new ProcessContext();
+                c.setRefUniqueNo(child.getRefUniqueNo());
+
+                context.addChildContext(tplId, c);
+            }
+        }
+
+        return context;
+    }
+
+    @SuppressWarnings("rawtypes")
     private void reflectCopyData(Object bizData, DataContext dataContext) {
         if (Objects.nonNull(bizData) && Objects.nonNull(bizData.getClass())
             && !bizData.getClass().equals(Object.class)) {
@@ -297,51 +336,16 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return null;
     }
 
-    @SuppressWarnings("rawtypes")
-    protected ProcessContext buildContext(int templateId, long refUniqueNo, long parentRefUniqueNo,
-                                          int source, int destination, DataContext dataContext) {
-        return buildContext(templateId, -1, refUniqueNo, parentRefUniqueNo, source, destination,
-            dataContext);
-    }
-
-    @SuppressWarnings("rawtypes")
-    protected ProcessContext buildContext(int templateId, int actionId, long refUniqueNo,
-                                          long parentRefUniqueNo, int source, int destination,
-                                          DataContext dataContext) {
-        ProcessContext context = buildContext(templateId, actionId, refUniqueNo, source,
-            destination, dataContext);
-
-        // just for initialize:
-        // Case A: when has parent process, set parent ref unique no for children to read 
-        if (parentRefUniqueNo > 0) {
-            ProcessContext c = new ProcessContext();
-            c.setRefUniqueNo(parentRefUniqueNo);
-            context.setParentContext(c);
-        }
-
-        // Case B: when has children processes, set children unique no for parent to read
-        if (!CollectionUtils.isEmpty(dataContext.getChildrenDataContext())) {
-            Map<Integer, DataContext> children = dataContext.getChildrenDataContext();
-            for (Map.Entry<Integer, DataContext> entry : children.entrySet()) {
-                int tplId = entry.getKey();
-                DataContext child = entry.getValue();
-
-                ProcessContext c = new ProcessContext();
-                c.setRefUniqueNo(child.getRefUniqueNo());
-
-                context.addChildContext(tplId, c);
-            }
-        }
-
-        return context;
-    }
-
     protected void checkSourceStatus(int currentStatus, int source) {
         // -1 represents universal status.
         if (source != -1 && currentStatus != source) {
             throw new SystemException(SystemResultCode.PARAM_INVALID,
                 MachineConstant.SOURCE_STATUS_INCORRECT);
         }
+    }
+
+    protected int realSrc(int currentStatus, int source) {
+        return source == DEFAULT_STATUS ? currentStatus : source;
     }
 
 }

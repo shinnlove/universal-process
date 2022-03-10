@@ -202,8 +202,9 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
             execute(context, handlers(actionId, true));
 
             // rotate embed status
-            proceedProcessStatus(templateId, actionId, no, src, dst, dataContext.getOperatorType(),
-                dataContext.getOperatorId(), dataContext.getOperator(), dataContext.getRemark());
+            proceedProcessStatus(templateId, actionId, no, realSrc(current, src), dst,
+                dataContext.getOperatorType(), dataContext.getOperatorId(),
+                dataContext.getOperator(), dataContext.getRemark());
 
             if (proceedParent && pRefNo > 0) {
                 // slowest child will proceed parent whose dst follows with the newest slowest child
