@@ -29,6 +29,8 @@ import com.bilibili.universal.process.model.status.BriefProcess;
 import com.bilibili.universal.util.common.AssertUtil;
 
 /**
+ * Status machine 2nd service implementation.
+ * 
  * @author Tony Zhao
  * @version $Id: StatusMachine2ndServiceImpl.java, v 0.1 2022-02-09 5:50 PM Tony Zhao Exp $$
  */
