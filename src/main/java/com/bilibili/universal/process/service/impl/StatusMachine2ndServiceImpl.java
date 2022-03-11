@@ -192,10 +192,13 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
             int current = process.getCurrentStatus();
             long pRefNo = process.getParentRefUniqueNo();
             long no = process.getProcessNo();
-            context.setProcessNo(no);
 
             // check source
             checkSourceStatus(current, src);
+
+            // fix accurate status
+            context.setSourceStatus(realSrc(current, src));
+            context.setProcessNo(no);
 
             // no blocking in way..
             checkBlocking(no);
