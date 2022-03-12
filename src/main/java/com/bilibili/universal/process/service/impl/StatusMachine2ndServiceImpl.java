@@ -206,10 +206,15 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
             // handlers in the action
             execute(context, handlers(actionId, true));
 
+            // operation info.
+            int opType = dataContext.getOperatorType();
+            long opId = dataContext.getOperatorId();
+            String op = dataContext.getOperator();
+            String remark = dataContext.getRemark();
+
             // rotate embed status
-            proceedProcessStatus(templateId, actionId, no, realSrc(current, src), dst,
-                dataContext.getOperatorType(), dataContext.getOperatorId(),
-                dataContext.getOperator(), dataContext.getRemark());
+            proceedProcessStatus(templateId, actionId, no, realSrc(current, src), dst, opType, opId,
+                op, remark);
 
             if (proceedParent && pRefNo > 0) {
                 // slowest child will proceed parent whose dst follows with the newest slowest child
@@ -229,6 +234,8 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
                     if (aid > 0) {
                         // Special Warning: cascade proceed parent, never proceed any children in reverse!
                         DataContext d = new DataContext(chooseParentParam(cache, context, pid));
+                        backFillOpInfo(d, opType, opId, op, remark);
+
                         ProcessContext pc = proceedProcess(aid, pRefNo, d, true, false);
                         context.parent(pc);
                     }
@@ -247,6 +254,7 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
                         if (aid > 0) {
                             long cRefNo = c.getRefUniqueNo();
                             DataContext d = new DataContext(chooseChildParam(cache, context));
+                            backFillOpInfo(d, opType, opId, op, remark);
 
                             // Special Warning: cascade proceed in one orientation, never reverse!
                             ProcessContext pc = proceedProcess(aid, cRefNo, d, false, true);
@@ -394,4 +402,5 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         // execute after deduce
         return proceedProcess(aid, refNo, dataContext, callback);
     }
+
 }

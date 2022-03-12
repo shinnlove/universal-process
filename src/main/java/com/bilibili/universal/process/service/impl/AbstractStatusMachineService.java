@@ -283,6 +283,14 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return context;
     }
 
+    protected void backFillOpInfo(DataContext dataContext, int operatorType, long operatorId,
+                                  String operator, String remark) {
+        dataContext.setOperatorType(operatorType);
+        dataContext.setOperatorId(operatorId);
+        dataContext.setOperator(operator);
+        dataContext.setRemark(remark);
+    }
+
     @SuppressWarnings("rawtypes")
     private void reflectCopyData(Object bizData, DataContext dataContext) {
         if (Objects.nonNull(bizData) && Objects.nonNull(bizData.getClass())
