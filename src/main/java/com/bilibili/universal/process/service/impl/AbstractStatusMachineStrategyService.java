@@ -7,6 +7,7 @@ package com.bilibili.universal.process.service.impl;
 import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_ACTION_ID;
 import static com.bilibili.universal.process.consts.MachineConstant.DEFAULT_STATUS;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import org.springframework.util.CollectionUtils;
 
 import com.bilibili.universal.process.model.cache.StatusCache;
 import com.bilibili.universal.process.model.cache.TemplateCache;
+import com.bilibili.universal.process.model.cache.TemplateMetadata;
 import com.bilibili.universal.process.model.process.UniversalProcess;
 import com.bilibili.universal.process.model.status.BriefProcess;
 import com.bilibili.universal.process.model.status.StatusRefMapping;
@@ -60,6 +62,21 @@ public abstract class AbstractStatusMachineStrategyService extends
         return DEFAULT_STATUS;
     }
 
+    private int getParentTplId(UniversalProcess process) {
+        int id = process.getTemplateId();
+        TemplateCache cache = getCache(id);
+        TemplateMetadata metadata = cache.getMetadata();
+        return metadata.getParentId();
+    }
+
+    /**
+     * Special warning: when call this method, child tx has been submitted.
+     * should not call this method when tx is not committed, 
+     * if need deduce all children' will proceed status, pls use deduce slowest child instead of this!
+     * 
+     * @param children 
+     * @return
+     */
     protected BriefProcess slowestChildrenStatus(List<UniversalProcess> children) {
         BriefProcess brief = new BriefProcess(-1, -1, -1);
 
@@ -67,36 +84,23 @@ public abstract class AbstractStatusMachineStrategyService extends
             return brief;
         }
 
-        UniversalProcess process = children.get(0);
-        int id = process.getTemplateId();
-        int current = process.getCurrentStatus();
-
-        TemplateCache cache = getCache(id);
-        StatusCache[] arr = cache.getStatusArray();
-
-        if (arr.length <= 0) {
-            return brief;
-        }
-
-        // init
-        brief.setTid(id);
-        brief.setStatus(current);
-
-        int min = getStatusSequence(arr, current);
+        // all children process change to parent ref status to compare latest
+        int pid = -1;
+        List<Integer> parentStatus = new ArrayList<>();
         for (UniversalProcess c : children) {
             int cs = c.getCurrentStatus();
-            int seq = getStatusSequence(arr, cs);
-            if (seq < min) {
-                min = seq;
-
-                // VIP: refresh slowest status and its template id! ×3
-                brief.setStatus(cs);
-                brief.setTid(c.getTemplateId());
-                break;
-            }
+            int cid = c.getTemplateId();
+            pid = getParentTplId(c);
+            parentStatus.add(statusC2P(pid, cid, cs));
         }
 
-        return brief;
+        // parentStatus list could not be empty here
+        int pStatus = Collections.min(parentStatus);
+
+        TemplateCache cache = getCache(pid);
+        StatusCache[] arr = cache.getStatusArray();
+
+        return new BriefProcess(pid, getStatusSequence(arr, pStatus), pStatus);
     }
 
     protected int nearestAction(int parentTemplateId, int parentDestination, int childTemplateId,

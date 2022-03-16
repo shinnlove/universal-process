@@ -223,9 +223,9 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
                 int pid = pProcess.getTemplateId();
                 int pSrc = pProcess.getCurrentStatus();
 
+                // VIP: select slowest child ref parent status!
                 BriefProcess slowest = slowestChildrenStatus(refChildren(pRefNo));
-                // VIP: pls use slowest template id and its current status do ref mapping!!
-                int pDst = statusC2P(pid, slowest.getTid(), slowest.getStatus());
+                int pDst = slowest.getStatus();
 
                 if (behind(pid, pSrc, pDst)) {
                     // really behind should be proceeded!
@@ -326,11 +326,9 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
                 pData.setChildren(id, cd);
             }
 
+            // VIP: select slowest child ref parent status to initialize parent process
             BriefProcess slowest = slowestChildrenStatus(refChildren(pno));
-            // VIP: pls use slowest template id and its current status do ref mapping!!
-            int dst = statusC2P(ptId, slowest.getTid(), slowest.getStatus());
-
-            return initProcess(ptId, dst, pno, pData);
+            return initProcess(ptId, slowest.getStatus(), pno, pData);
         });
 
         return new BatchInitResult(pno, processNos);
