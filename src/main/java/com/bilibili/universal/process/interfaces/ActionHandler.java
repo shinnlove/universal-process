@@ -124,11 +124,15 @@ public interface ActionHandler<T, R> extends BaseHandler {
     /**
      * New feature: add handlers executed as pipeline.
      *
-     * @param context
+     * @param x    the process context
      * @return
      */
-    default R pipeline(ProcessContext<T> context) {
-        return process(null, context);
+    default R pipeline(ProcessContext<T> x) {
+        Class<?> handlerType = paramType();
+        Object data = x.getDataContext().getData();
+
+        x.store(this, handlerType, deconstruction(data, handlerType), true);
+        return process(null, x);
     }
 
 }

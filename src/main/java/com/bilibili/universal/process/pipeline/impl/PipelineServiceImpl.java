@@ -7,9 +7,11 @@ package com.bilibili.universal.process.pipeline.impl;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +22,16 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.CollectionUtils;
 
+import com.bilibili.universal.process.ex.BizHandlerExecuteException;
+import com.bilibili.universal.process.ex.BizNPEParamOrResultsException;
+import com.bilibili.universal.process.ex.StatusBreakException;
+import com.bilibili.universal.process.ex.StatusContinueException;
 import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.pipeline.PipelineService;
 import com.bilibili.universal.process.service.ProcessMetadataService;
+import com.bilibili.universal.util.code.SystemResultCode;
 import com.bilibili.universal.util.exception.SystemException;
 import com.bilibili.universal.util.log.LoggerUtil;
 
@@ -54,46 +61,83 @@ public class PipelineServiceImpl implements PipelineService {
     @Autowired
     private ProcessMetadataService processMetadataService;
 
+    /**
+     * @see PipelineService#doPipeline(int, DataContext)
+     */
+    @SuppressWarnings({ "rawtypes" })
     @Override
     public Object doPipeline(int actionId, DataContext dataContext) {
         return doPipeline(actionId, dataContext, resp -> {
         });
     }
 
+    /**
+     * @see PipelineService#doPipeline(int, DataContext, Consumer)
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public Object doPipeline(int actionId, DataContext dataContext,
                              Consumer<ProcessContext> callback) {
-        ProcessContext<String> context = new ProcessContext<>(dataContext);
+        ProcessContext<Object> context = new ProcessContext<>(dataContext);
 
         // prepare handlers
         List<ActionHandler> syncHandlers = processMetadataService.getExecutions(actionId, true);
+        List<ActionHandler> asyncHandlers = processMetadataService.getExecutions(actionId, false);
 
-        execute(context, syncHandlers);
+        // 1st. execute sync handlers
+        Object r = execute(context, syncHandlers);
 
+        // 2nd. execute the callback hook
         if (callback != null) {
             callback.accept(context);
         }
 
+        // 3rd. execute async handlers asynchronously without the results
+        async(() -> execute(context, asyncHandlers, r), executor);
+
         return context;
     }
 
+    /**
+     * @see PipelineService#txPipeline(int, DataContext)
+     */
+    @SuppressWarnings({ "rawtypes" })
     @Override
     public Object txPipeline(int actionId, DataContext dataContext) {
         return txPipeline(actionId, dataContext, resp -> {
         });
     }
 
+    /**
+     * @see PipelineService#txPipeline(int, DataContext, Consumer)
+     */
+    @SuppressWarnings({ "rawtypes" })
     @Override
     public Object txPipeline(int actionId, DataContext dataContext,
                              Consumer<ProcessContext> callback) {
         return tx(status -> doPipeline(actionId, dataContext, callback));
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({ "rawtypes" })
     private Object execute(final ProcessContext context,
                            final List<ActionHandler> handlers) throws SystemException {
+        // when sync handlers execute first, initial result should be null if empty..
+        return execute(context, handlers, null);
+    }
 
-        CompletableFuture<Object> f = CompletableFuture.completedFuture(null);
+    /**
+     * When initial result is not null, should cache handler's temporarily execute result for next one to use.
+     *
+     * @param context  execute context
+     * @param handlers execute handlers
+     * @param initial  execution chain initial results for each handler to use
+     * @return
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private Object execute(final ProcessContext context, final List<ActionHandler> handlers,
+                           final Object initial) {
+
+        CompletableFuture<Object> f = CompletableFuture.completedFuture(initial);
         if (CollectionUtils.isEmpty(handlers)) {
             return doExecute(f);
         }
@@ -103,11 +147,11 @@ public class PipelineServiceImpl implements PipelineService {
             final int i = cursor++;
             final ActionHandler handler = handlers.get(i);
             f = f.thenCompose(previous -> CompletableFuture.supplyAsync(() -> {
-                if (i > 0) {
+                if (i > 0 || initial != null) {
                     handler.cache(handlers, i - 1, previous, context);
                 }
                 return handler.pipeline(context);
-            }, executor));
+            }, executor)).exceptionally(this::handleEx);
         }
 
         return doExecute(f);
@@ -125,8 +169,32 @@ public class PipelineServiceImpl implements PipelineService {
         return null;
     }
 
-    protected <R> R tx(final Function<TransactionStatus, R> function) {
-        return transactionTemplate.execute(status -> function.apply(status));
+    private Object handleEx(Throwable e) {
+
+        LoggerUtil.error(logger, e, "pipeline execution error occurs, ex=", e.getMessage());
+
+        if (e instanceof NullPointerException) {
+            // for smart cache NPE
+            throw new BizNPEParamOrResultsException(SystemResultCode.BIZ_PARAM_RESULT_NPE, e,
+                e.getMessage());
+        } else if (e instanceof StatusContinueException || e instanceof StatusBreakException) {
+            return null;
+        } else {
+            // for last ex info catch
+            throw new BizHandlerExecuteException(SystemResultCode.BIZ_HANDLER_EXECUTE_ERROR, e,
+                e.getMessage());
+        }
+    }
+
+    private <R> R tx(final Function<TransactionStatus, R> function) {
+        return transactionTemplate.execute(function::apply);
+    }
+
+    private <T> void async(Supplier<T> callable, Executor executor) {
+        CompletableFuture.runAsync(() -> {
+            CompletableFuture<T> f = CompletableFuture.supplyAsync(callable, executor);
+            doExecute(f);
+        }, executor);
     }
 
 }

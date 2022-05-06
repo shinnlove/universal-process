@@ -11,7 +11,7 @@
 
     <groupId>com.bilibili.process</groupId>
     <artifactId>universal-process-spring-boot-starter</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.5-SNAPSHOT</version>
 
     <name>universal-process-spring-boot-starter</name>
     <description>universal process starter project for Spring Boot</description>

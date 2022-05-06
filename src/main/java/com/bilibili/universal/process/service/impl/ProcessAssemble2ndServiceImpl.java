@@ -209,11 +209,10 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
                 s.isDefaultDst()));
         }
 
-        if (CollectionUtils.isEmpty(statusCache)) {
-            return template;
+        if (!CollectionUtils.isEmpty(statusCache)) {
+            // sort for not empty since should including pipeline service non-state action.
+            Collections.sort(statusCache);
         }
-
-        Collections.sort(statusCache);
 
         // step3: initializer
         Map<Integer, List<ActionHandler>> initializer = new HashMap<>();
@@ -444,7 +443,10 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
         }
 
         Map<T, V> reflection = map.get(key1);
-        reflection.put(key2, value);
+        if (!reflection.containsKey(key2)) {
+            // pipeline service action src and dst always be -1.
+            reflection.put(key2, value);
+        }
 
         return map;
     }
