@@ -31,7 +31,7 @@ import com.bilibili.universal.process.model.context.DataContext;
 import com.bilibili.universal.process.model.context.ProcessContext;
 import com.bilibili.universal.process.pipeline.PipelineService;
 import com.bilibili.universal.process.service.ProcessMetadataService;
-import com.bilibili.universal.util.code.SystemResultCode;
+import com.bilibili.universal.util.code.SystemCode;
 import com.bilibili.universal.util.exception.SystemException;
 import com.bilibili.universal.util.log.LoggerUtil;
 
@@ -175,13 +175,13 @@ public class PipelineServiceImpl implements PipelineService {
 
         if (e instanceof NullPointerException) {
             // for smart cache NPE
-            throw new BizNPEParamOrResultsException(SystemResultCode.BIZ_PARAM_RESULT_NPE, e,
+            throw new BizNPEParamOrResultsException(SystemCode.BIZ_PARAM_RESULT_NPE, e,
                 e.getMessage());
         } else if (e instanceof StatusContinueException || e instanceof StatusBreakException) {
             return null;
         } else {
             // for last ex info catch
-            throw new BizHandlerExecuteException(SystemResultCode.BIZ_HANDLER_EXECUTE_ERROR, e,
+            throw new BizHandlerExecuteException(SystemCode.BIZ_HANDLER_EXECUTE_ERROR, e,
                 e.getMessage());
         }
     }
@@ -191,10 +191,8 @@ public class PipelineServiceImpl implements PipelineService {
     }
 
     private <T> void async(Supplier<T> callable, Executor executor) {
-        CompletableFuture.runAsync(() -> {
-            CompletableFuture<T> f = CompletableFuture.supplyAsync(callable, executor);
-            doExecute(f);
-        }, executor);
+        CompletableFuture
+            .runAsync(() -> doExecute(CompletableFuture.supplyAsync(callable, executor)), executor);
     }
 
 }

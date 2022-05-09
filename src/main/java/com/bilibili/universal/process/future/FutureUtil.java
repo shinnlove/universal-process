@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bilibili.universal.util.code.SystemResultCode;
+import com.bilibili.universal.util.code.SystemCode;
 import com.bilibili.universal.util.exception.SystemException;
 import com.bilibili.universal.util.log.LoggerUtil;
 
@@ -27,7 +27,7 @@ public class FutureUtil {
             result = future.get();
         } catch (Exception e) {
             LoggerUtil.error(logger, e, e.getMessage());
-            throw new SystemException(SystemResultCode.SYSTEM_ERROR, e, e.getMessage());
+            throw new SystemException(SystemCode.SYSTEM_ERROR, e, e.getMessage());
         }
 
         return result;

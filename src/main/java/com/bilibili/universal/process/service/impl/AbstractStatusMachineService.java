@@ -36,7 +36,7 @@ import com.bilibili.universal.process.service.ActionExecutor;
 import com.bilibili.universal.process.service.ProcessMetadataService;
 import com.bilibili.universal.process.service.StatusMachine2ndService;
 import com.bilibili.universal.process.wrap.ReflectWrapWithResult;
-import com.bilibili.universal.util.code.SystemResultCode;
+import com.bilibili.universal.util.code.SystemCode;
 import com.bilibili.universal.util.common.AssertUtil;
 import com.bilibili.universal.util.exception.SystemException;
 import com.bilibili.universal.util.log.LoggerUtil;
@@ -123,7 +123,7 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
     protected UniversalProcess lockRefProcess(long refUniqueNo) {
         UniversalProcess process = universalProcessCoreService.getProcessByRefUniqueNo(refUniqueNo,
             true);
-        AssertUtil.isNotNull(process, SystemResultCode.PARAM_INVALID,
+        AssertUtil.isNotNull(process, SystemCode.PARAM_INVALID,
             MachineConstant.NO_PROCESS_IN_SYSTEM);
         return process;
     }
@@ -178,7 +178,7 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
                 int btId = bProcess.getTemplateId();
                 int bStatus = bProcess.getCurrentStatus();
                 if (!isFinalStatus(btId, bStatus)) {
-                    throw new SystemException(SystemResultCode.SYSTEM_ERROR,
+                    throw new SystemException(SystemCode.SYSTEM_ERROR,
                         MachineConstant.STATUS_HAS_BLOCKING_PROCESS);
                 }
             }
@@ -194,7 +194,7 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         } catch (Exception e) {
             LoggerUtil.error(logger, e, "Handler execution has error occurred, ", e.getMessage());
             // special warn: according to meeting discussion, the whole tx should be interrupted if one handler execute failed.
-            throw new SystemException(SystemResultCode.SYSTEM_ERROR, e, e.getMessage());
+            throw new SystemException(SystemCode.SYSTEM_ERROR, e, e.getMessage());
         }
     }
 
@@ -347,7 +347,7 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
     protected void checkSourceStatus(int currentStatus, int source) {
         // -1 represents universal status.
         if (source != -1 && currentStatus != source) {
-            throw new SystemException(SystemResultCode.PARAM_INVALID,
+            throw new SystemException(SystemCode.PARAM_INVALID,
                 MachineConstant.SOURCE_STATUS_INCORRECT);
         }
     }

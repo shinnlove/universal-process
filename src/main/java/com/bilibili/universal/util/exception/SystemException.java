@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.bilibili.universal.util.code.SystemCode;
 import com.bilibili.universal.util.code.SystemResultCode;
 
 /**
@@ -100,11 +101,11 @@ public class SystemException extends RuntimeException implements BaseException {
      *
      * Tips：错误信息跟着错误码中的描述走的构造器。
      *
-     * @param resultCode
+     * @param systemResultCode
      */
-    public SystemException(SystemResultCode resultCode) {
-        super(resultCode.getMessage());
-        this.resultCode = resultCode;
+    public SystemException(SystemResultCode systemResultCode) {
+        super(systemResultCode.getMessage());
+        this.resultCode = systemResultCode;
         this.digest.add(resultCode.getMessage());
         addDetail(resultCode.getCode(), resultCode.getMessage());
     }
@@ -114,12 +115,12 @@ public class SystemException extends RuntimeException implements BaseException {
      *
      * Tips：可以自定义错误信息提示的构造器，message是提示给前端的简要错误。
      *
-     * @param resultCode
+     * @param systemResultCode
      * @param message
      */
-    public SystemException(SystemResultCode resultCode, String message) {
-        super(resultCode.getMessage() + ":" + message);
-        this.resultCode = resultCode;
+    public SystemException(SystemResultCode systemResultCode, String message) {
+        super(systemResultCode.getMessage() + ":" + message);
+        this.resultCode = systemResultCode;
         this.digest.add(resultCode.getMessage() + ":" + message);
         addDetail(resultCode.getCode(), resultCode.getMessage() + ":" + message);
     }
@@ -131,13 +132,13 @@ public class SystemException extends RuntimeException implements BaseException {
      *
      * Tips：当外部引起错误，不想吃掉错误堆栈、并且增加内+外的简要描述信息时使用。
      *
-     * @param resultCode 内部错误码
-     * @param cause 引起错误的原因（外）
-     * @param message 错误原因描述（内+外）
+     * @param systemResultCode      内部错误码
+     * @param cause                 引起错误的原因（外）
+     * @param message               错误原因描述（内+外）
      */
-    public SystemException(SystemResultCode resultCode, Throwable cause, String message) {
-        super(resultCode.getMessage() + ":" + message, cause);
-        this.resultCode = resultCode;
+    public SystemException(SystemResultCode systemResultCode, Throwable cause, String message) {
+        super(systemResultCode.getMessage() + ":" + message, cause);
+        this.resultCode = systemResultCode;
         String msg = resultCode.getMessage() + ":" + message + ":" + cause.getMessage();
         this.digest.add(msg);
         addDetail(resultCode.getCode(), msg);
@@ -150,13 +151,14 @@ public class SystemException extends RuntimeException implements BaseException {
      *
      * Tips：当外部引起错误，不想吃掉错误堆栈、并且增加内+外的简要描述信息时使用。
      *
-     * @param resultCode 内部错误码
-     * @param cause 引起错误的原因（外）
-     * @param message 错误原因描述（内+外）
+     * @param systemResultCode      内部错误码
+     * @param cause                 引起错误的原因（外）
+     * @param message               错误原因描述（内+外）
      */
-    public SystemException(SystemResultCode resultCode, SystemException cause, String message) {
-        super(resultCode.getMessage() + ":" + message, cause);
-        this.resultCode = resultCode;
+    public SystemException(SystemResultCode systemResultCode, SystemException cause,
+                           String message) {
+        super(systemResultCode.getMessage() + ":" + message, cause);
+        this.resultCode = systemResultCode;
         // 原来的
         this.digest.addAll(cause.getDigest());
         // 这个异常的
@@ -174,12 +176,12 @@ public class SystemException extends RuntimeException implements BaseException {
      *
      * Tips：当外部引起错误，不想吃掉错误堆栈使用。
      *
-     * @param resultCode
+     * @param systemResultCode
      * @param cause
      */
-    public SystemException(SystemResultCode resultCode, Throwable cause) {
-        super(resultCode.getMessage(), cause);
-        this.resultCode = resultCode;
+    public SystemException(SystemResultCode systemResultCode, Throwable cause) {
+        super(systemResultCode.getMessage(), cause);
+        this.resultCode = systemResultCode;
         this.digest.add(resultCode.getMessage());
         addDetail(resultCode.getCode(), resultCode.getMessage());
     }
@@ -189,12 +191,12 @@ public class SystemException extends RuntimeException implements BaseException {
      *
      * 专门用来将一个`SystemException`类型错误转换为另一个`SystemException`子类。
      *
-     * @param resultCode
+     * @param systemResultCode
      * @param cause
      */
-    public SystemException(SystemResultCode resultCode, SystemException cause) {
-        super(resultCode.getMessage() + ":" + cause.getResultCode().getMessage(), cause);
-        this.resultCode = resultCode;
+    public SystemException(SystemResultCode systemResultCode, SystemException cause) {
+        super(systemResultCode.getMessage() + ":" + cause.getResultCode().getMessage(), cause);
+        this.resultCode = systemResultCode;
         // 原来的
         this.digest.addAll(cause.getDigest());
         // 这个异常的
@@ -212,7 +214,7 @@ public class SystemException extends RuntimeException implements BaseException {
      */
     public SystemException(String message) {
         super(message);
-        SystemResultCode code = SystemResultCode.SYSTEM_ERROR;
+        SystemCode code = SystemCode.SYSTEM_ERROR;
         this.resultCode = code;
         this.digest.add(code.getMessage() + ":" + message);
         addDetail(code.getCode(), code.getMessage() + ":" + message);
@@ -226,7 +228,7 @@ public class SystemException extends RuntimeException implements BaseException {
      */
     public SystemException(String message, Throwable throwable) {
         super(message, throwable);
-        SystemResultCode code = SystemResultCode.SYSTEM_ERROR;
+        SystemCode code = SystemCode.SYSTEM_ERROR;
         this.resultCode = code;
         String msg = code.getMessage() + ":" + message + ":" + throwable.getMessage();
         this.digest.add(msg);

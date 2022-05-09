@@ -16,7 +16,7 @@ import com.bilibili.universal.process.ex.StatusBreakException;
 import com.bilibili.universal.process.ex.StatusContinueException;
 import com.bilibili.universal.process.interfaces.ActionHandler;
 import com.bilibili.universal.process.model.context.ProcessContext;
-import com.bilibili.universal.util.code.SystemResultCode;
+import com.bilibili.universal.util.code.SystemCode;
 
 /**
  * The action chain new model, each process with explicit template id and action id will have specific handlers.
@@ -62,7 +62,7 @@ public class ActionChain implements Serializable {
             handler.doProcess(this, context);
         } catch (NullPointerException e) {
             // for smart cache NPE
-            throw new BizNPEParamOrResultsException(SystemResultCode.BIZ_PARAM_RESULT_NPE, e,
+            throw new BizNPEParamOrResultsException(SystemCode.BIZ_PARAM_RESULT_NPE, e,
                 e.getMessage());
         } catch (StatusContinueException e) {
             // skip current handler remaining code snippet and move to execute next
@@ -72,7 +72,7 @@ public class ActionChain implements Serializable {
             return;
         } catch (Exception e) {
             // for last ex info catch
-            throw new BizHandlerExecuteException(SystemResultCode.BIZ_HANDLER_EXECUTE_ERROR, e,
+            throw new BizHandlerExecuteException(SystemCode.BIZ_HANDLER_EXECUTE_ERROR, e,
                 e.getMessage());
         }
     }

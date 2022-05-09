@@ -4,7 +4,7 @@
  */
 package com.bilibili.universal.process.ex;
 
-import com.bilibili.universal.util.code.SystemResultCode;
+import com.bilibili.universal.util.code.SystemCode;
 import com.bilibili.universal.util.exception.SystemException;
 
 /**
@@ -17,11 +17,11 @@ public class BizNPEParamOrResultsException extends SystemException {
         super(message);
     }
 
-    public BizNPEParamOrResultsException(SystemResultCode resultCode, Throwable cause) {
+    public BizNPEParamOrResultsException(SystemCode resultCode, Throwable cause) {
         super(resultCode, cause);
     }
 
-    public BizNPEParamOrResultsException(SystemResultCode resultCode, Throwable cause,
+    public BizNPEParamOrResultsException(SystemCode resultCode, Throwable cause,
                                          String message) {
         super(resultCode, cause, message);
     }

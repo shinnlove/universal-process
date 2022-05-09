@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.springframework.util.CollectionUtils;
 
-import com.bilibili.universal.util.code.SystemResultCode;
+import com.bilibili.universal.util.code.SystemCode;
 import com.bilibili.universal.util.exception.SystemException;
 
 /**
@@ -25,32 +25,32 @@ public class AssertUtil extends org.springframework.util.Assert {
      */
     public static void largeThanValue(long checkNumber, long compareNumber) {
         if (checkNumber <= compareNumber) {
-            throw new SystemException(SystemResultCode.PARAM_INVALID,
+            throw new SystemException(SystemCode.PARAM_INVALID,
                 "业务值" + checkNumber + "不应小于指定目标值" + compareNumber);
         }
     }
 
     public static void smallerThanValue(long checkNumber, long compareNumber) {
         if (checkNumber >= compareNumber) {
-            throw new SystemException(SystemResultCode.PARAM_INVALID,
+            throw new SystemException(SystemCode.PARAM_INVALID,
                 "业务值" + checkNumber + "不应大于指定目标值" + compareNumber);
         }
     }
 
     /**
      * 传入 bool 表达式，判断 对
-     * 报错为默认 {@link SystemResultCode.SYSTEM_ERROR}
+     * 报错为默认 {@link SystemCode.SYSTEM_ERROR}
      * @param condition 需要被判断对 的表达式
      */
     public static void isTrue(boolean condition) {
         if (!condition) {
-            throw new SystemException(SystemResultCode.SYSTEM_ERROR);
+            throw new SystemException(SystemCode.SYSTEM_ERROR);
         }
     }
 
     /**
      * 传入 bool 表达式，判断 错
-     * 报错为默认 {@link SystemResultCode.SYSTEM_ERROR}
+     * 报错为默认 {@link SystemCode.SYSTEM_ERROR}
      * @param condition 需要被判断错 的表达式
      */
     public static void isFalse(boolean condition) {
@@ -62,7 +62,7 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param condition 需要被判断对 的表达式
      * @param code error code enum extend  SystemResultCode
      */
-    public static void isTrue(boolean condition, SystemResultCode code) {
+    public static void isTrue(boolean condition, SystemCode code) {
         if (!condition) {
             throw new SystemException(code);
         }
@@ -73,7 +73,7 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param condition 需要被判断错 的表达式
      * @param code error code enum extend  SystemResultCode
      */
-    public static void isFalse(boolean condition, SystemResultCode code) {
+    public static void isFalse(boolean condition, SystemCode code) {
         isTrue(!condition, code);
     }
 
@@ -84,7 +84,7 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param code error code enum extend  SystemResultCode
      * @param customizeMessage other error detail message
      */
-    public static void isTrue(boolean condition, SystemResultCode code, String customizeMessage) {
+    public static void isTrue(boolean condition, SystemCode code, String customizeMessage) {
         if (!condition) {
             throw new SystemException(code, customizeMessage);
         }
@@ -97,7 +97,7 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param code error code enum extend  SystemResultCode
      * @param customizeMessage other error detail message
      */
-    public static void isFalse(boolean condition, SystemResultCode code, String customizeMessage) {
+    public static void isFalse(boolean condition, SystemCode code, String customizeMessage) {
         isTrue(!condition, code, customizeMessage);
     }
 
@@ -109,7 +109,7 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param cause cause error
      * @param customizeMessage other error detail message
      */
-    public static void isTrue(boolean condition, SystemResultCode code, SystemException cause,
+    public static void isTrue(boolean condition, SystemCode code, SystemException cause,
                               String customizeMessage) {
         if (!condition) {
             throw new SystemException(code, cause, customizeMessage);
@@ -124,19 +124,19 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param cause cause error
      * @param customizeMessage other error detail message
      */
-    public static void isFalse(boolean condition, SystemResultCode code, SystemException cause,
+    public static void isFalse(boolean condition, SystemCode code, SystemException cause,
                                String customizeMessage) {
         isTrue(!condition, code, cause, customizeMessage);
     }
 
     /**
      * 传入 对象，判断 非空
-     * 报错为默认 {@link SystemResultCode.SYSTEM_ERROR}
+     * 报错为默认 {@link SystemCode.SYSTEM_ERROR}
      * @param object 需要被判断的对象
      */
     public static void isNotNull(Object object) {
         if (object == null) {
-            throw new SystemException(SystemResultCode.SYSTEM_ERROR);
+            throw new SystemException(SystemCode.SYSTEM_ERROR);
         }
     }
 
@@ -146,7 +146,7 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param object 需要被判断的对象
      * @param code error code enum extend  SystemResultCode
      */
-    public static void isNotNull(Object object, SystemResultCode code) {
+    public static void isNotNull(Object object, SystemCode code) {
         if (object == null) {
             throw new SystemException(code);
         }
@@ -154,12 +154,12 @@ public class AssertUtil extends org.springframework.util.Assert {
 
     /**
      * 传入 对象，判断 空
-     * 报错为默认 {@link SystemResultCode.SYSTEM_ERROR}
+     * 报错为默认 {@link SystemCode.SYSTEM_ERROR}
      * @param object 需要被判断的对象
      */
     public static void isNull(Object object) {
         if (object != null) {
-            throw new SystemException(SystemResultCode.SYSTEM_ERROR);
+            throw new SystemException(SystemCode.SYSTEM_ERROR);
         }
     }
 
@@ -169,7 +169,7 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param object 需要被判断的对象
      * @param code error code enum extend  SystemResultCode
      */
-    public static void isNull(Object object, SystemResultCode code) {
+    public static void isNull(Object object, SystemCode code) {
         if (object != null) {
             throw new SystemException(code);
         }
@@ -182,7 +182,7 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param code error code enum extend  SystemResultCode
      * @param customizeMessage other error detail message
      */
-    public static void isNotNull(Object object, SystemResultCode code, String customizeMessage) {
+    public static void isNotNull(Object object, SystemCode code, String customizeMessage) {
         if (object == null) {
             throw new SystemException(code, customizeMessage);
         }
@@ -195,7 +195,7 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param code error code enum extend  SystemResultCode
      * @param customizeMessage other error detail message
      */
-    public static void isNull(Object object, SystemResultCode code, String customizeMessage) {
+    public static void isNull(Object object, SystemCode code, String customizeMessage) {
         if (object != null) {
             throw new SystemException(code, customizeMessage);
         }
@@ -209,7 +209,7 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param cause cause error
      * @param customizeMessage other error detail message
      */
-    public static void isNotNull(Object object, SystemResultCode code, SystemException cause,
+    public static void isNotNull(Object object, SystemCode code, SystemException cause,
                                  String customizeMessage) {
         if (object == null) {
             throw new SystemException(code, cause, customizeMessage);
@@ -224,7 +224,7 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param cause cause error
      * @param customizeMessage other error detail message
      */
-    public static void isNull(Object object, SystemResultCode code, SystemException cause,
+    public static void isNull(Object object, SystemCode code, SystemException cause,
                               String customizeMessage) {
         if (object != null) {
             throw new SystemException(code, cause, customizeMessage);
@@ -238,20 +238,20 @@ public class AssertUtil extends org.springframework.util.Assert {
      * @param code
      * @param <T>
      */
-    public static <T> void listNotEmpty(List<T> list, SystemResultCode code) {
+    public static <T> void listNotEmpty(List<T> list, SystemCode code) {
         if (CollectionUtils.isEmpty(list)) {
             throw new SystemException(code, "列表不能为空");
         }
     }
 
-    public static <T> void listNotEmpty(List<T> list, SystemResultCode code,
+    public static <T> void listNotEmpty(List<T> list, SystemCode code,
                                         String customizeMessage) {
         if (CollectionUtils.isEmpty(list)) {
             throw new SystemException(code, customizeMessage);
         }
     }
 
-    public static <T> void listEmpty(List<T> list, SystemResultCode code, String customizeMessage) {
+    public static <T> void listEmpty(List<T> list, SystemCode code, String customizeMessage) {
         if (!CollectionUtils.isEmpty(list)) {
             throw new SystemException(code, customizeMessage);
         }

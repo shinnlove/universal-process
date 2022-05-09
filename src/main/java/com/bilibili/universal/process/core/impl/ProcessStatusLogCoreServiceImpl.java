@@ -18,7 +18,7 @@ import com.bilibili.universal.dao.model.ProcessStatusLogPo;
 import com.bilibili.universal.dao.model.ProcessStatusLogPoExample;
 import com.bilibili.universal.process.core.ProcessStatusLogCoreService;
 import com.bilibili.universal.process.model.log.ProcessStatusLog;
-import com.bilibili.universal.util.code.SystemResultCode;
+import com.bilibili.universal.util.code.SystemCode;
 import com.bilibili.universal.util.common.AssertUtil;
 import com.bilibili.universal.util.common.CommonUtil;
 
@@ -68,8 +68,8 @@ public class ProcessStatusLogCoreServiceImpl implements ProcessStatusLogCoreServ
     @Override
     public List<ProcessStatusLog> getLogsByProcessNoAndDesStatus(List<Long> processNos,
                                                                  Integer destinationStatus) {
-        AssertUtil.listNotEmpty(processNos, SystemResultCode.PARAM_INVALID);
-        AssertUtil.isNotNull(destinationStatus, SystemResultCode.PARAM_INVALID);
+        AssertUtil.listNotEmpty(processNos, SystemCode.PARAM_INVALID);
+        AssertUtil.isNotNull(destinationStatus, SystemCode.PARAM_INVALID);
 
         ProcessStatusLogPoExample example = new ProcessStatusLogPoExample();
         example.or().andProcessNoIn(processNos);

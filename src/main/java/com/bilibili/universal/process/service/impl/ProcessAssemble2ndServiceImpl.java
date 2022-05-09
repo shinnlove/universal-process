@@ -38,7 +38,7 @@ import com.bilibili.universal.process.model.status.StatusRefMapping;
 import com.bilibili.universal.process.parser.XmlTemplateParser;
 import com.bilibili.universal.process.service.ProcessAssemble2ndService;
 import com.bilibili.universal.process.service.ProcessMetadataService;
-import com.bilibili.universal.util.code.SystemResultCode;
+import com.bilibili.universal.util.code.SystemCode;
 import com.bilibili.universal.util.common.AssertUtil;
 import com.bilibili.universal.util.exception.SystemException;
 import com.bilibili.universal.util.log.LoggerUtil;
@@ -152,7 +152,7 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
         for (Map.Entry<Integer, ActionCache> entry : actions.entrySet()) {
             int actionId = entry.getKey();
             if (actionIdCache.containsKey(actionId)) {
-                throw new SystemException(SystemResultCode.SYSTEM_ERROR,
+                throw new SystemException(SystemCode.SYSTEM_ERROR,
                     "Each action id should be unique, now is duplicate!");
             }
 
@@ -282,7 +282,7 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
 
         try {
             handlerService = (ActionHandler) applicationContext.getBean(serviceId);
-            AssertUtil.isNotNull(handlerService, SystemResultCode.SYSTEM_ERROR,
+            AssertUtil.isNotNull(handlerService, SystemCode.SYSTEM_ERROR,
                 "Springboot context doesn't have a bean with id=" + serviceId);
 
         } catch (Exception e) {
@@ -290,7 +290,7 @@ public class ProcessAssemble2ndServiceImpl implements InitializingBean, Applicat
                 "Springboot context doesn't have a bean with id=" + serviceId, e.getMessage());
 
             // determine whether throw ex later...
-            throw new SystemException(SystemResultCode.SYSTEM_ERROR, e,
+            throw new SystemException(SystemCode.SYSTEM_ERROR, e,
                 "Springboot context doesn't have a bean with id=" + serviceId);
         }
 

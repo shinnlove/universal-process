@@ -4,7 +4,7 @@
  */
 package com.bilibili.universal.process.ex;
 
-import com.bilibili.universal.util.code.SystemResultCode;
+import com.bilibili.universal.util.code.SystemCode;
 import com.bilibili.universal.util.exception.SystemException;
 
 /**
@@ -13,12 +13,12 @@ import com.bilibili.universal.util.exception.SystemException;
  */
 public class BizHandlerExecuteException extends SystemException {
 
-    public BizHandlerExecuteException(SystemResultCode resultCode, Throwable cause,
+    public BizHandlerExecuteException(SystemCode resultCode, Throwable cause,
                                       String message) {
         super(resultCode, cause, message);
     }
 
-    public BizHandlerExecuteException(SystemResultCode resultCode, Throwable cause) {
+    public BizHandlerExecuteException(SystemCode resultCode, Throwable cause) {
         super(resultCode, cause);
     }
 
