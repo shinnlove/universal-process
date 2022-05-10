@@ -14,6 +14,8 @@ public final class MachineConstant {
 
     }
 
+    public static final String EMPTY                       = "";
+
     public static final int    DEFAULT_TEMPLATE_ID         = -1;
 
     public static final int    DEFAULT_ACTION_ID           = -1;

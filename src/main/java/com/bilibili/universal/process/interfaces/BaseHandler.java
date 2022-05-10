@@ -4,6 +4,7 @@
  */
 package com.bilibili.universal.process.interfaces;
 
+import static com.bilibili.universal.process.consts.MachineConstant.EMPTY;
 import static com.bilibili.universal.process.consts.MetadataConstant.*;
 
 import java.lang.reflect.Field;
@@ -11,6 +12,7 @@ import java.util.Objects;
 
 import org.springframework.util.ReflectionUtils;
 
+import com.bilibili.universal.process.annotation.ValueField;
 import com.bilibili.universal.process.wrap.ReflectWrapWithResult;
 
 /**
@@ -48,16 +50,36 @@ public interface BaseHandler {
         return isBasicType(clazz.getName());
     }
 
-    default Object deconstruction(Object data, Class<?> handlerType) {
-        if (Objects.nonNull(data)) {
-            Class<?> dataClass = data.getClass();
-            if (!dataClass.isAssignableFrom(handlerType)) {
-                // search for inner type
-                for (Field f : dataClass.getDeclaredFields()) {
-                    Class<?> cls = f.getType();
-                    if (!isBasicType(cls) && cls.isAssignableFrom(handlerType)) {
-                        return fValue(data, f);
-                    }
+    default Object deconstruction(Object data, Class<?> handlerType, ValueField fieldMark) {
+        if (Objects.isNull(data)) {
+            return null;
+        }
+
+        if (Objects.isNull(fieldMark) || EMPTY.equals(fieldMark.value())) {
+            return deconstruction0(data, handlerType);
+        }
+
+        String fName = fieldMark.value();
+        Class<?> dataClass = data.getClass();
+        // search for field
+        for (Field f : dataClass.getDeclaredFields()) {
+            if (fName.equals(f.getName())) {
+                // matched the field's name
+                return fValue(data, f);
+            }
+        }
+
+        return data;
+    }
+
+    default Object deconstruction0(Object data, Class<?> handlerType) {
+        Class<?> dataClass = data.getClass();
+        if (!dataClass.isAssignableFrom(handlerType)) {
+            // search for inner type
+            for (Field f : dataClass.getDeclaredFields()) {
+                Class<?> cls = f.getType();
+                if (!isBasicType(cls) && cls.isAssignableFrom(handlerType)) {
+                    return fValue(data, f);
                 }
             }
         }

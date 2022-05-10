@@ -4,7 +4,6 @@
  */
 package com.bilibili.universal.process.interfaces;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Objects;
@@ -12,6 +11,7 @@ import java.util.Optional;
 
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
+import com.bilibili.universal.process.annotation.ValueField;
 import com.bilibili.universal.process.chain.ActionChain;
 import com.bilibili.universal.process.model.context.ProcessContext;
 
@@ -104,10 +104,11 @@ public interface ActionHandler<T, R> extends BaseHandler {
      * @param x     the process context
      */
     default void doProcess(ActionChain c, ProcessContext<T> x) {
-        Class<?> handlerType = paramType();
         Object data = x.getDataContext().getData();
+        Class<?> handlerType = paramType();
+        ValueField f = this.getClass().getAnnotation(ValueField.class);
 
-        x.store(this, handlerType, deconstruction(data, handlerType), true);
+        x.store(this, handlerType, deconstruction(data, handlerType, f), true);
         cache(c.getActionHandlers(), c.getIndex() - 1, process(c, x), x);
         c.process(x);
     }
@@ -130,8 +131,9 @@ public interface ActionHandler<T, R> extends BaseHandler {
     default R pipeline(ProcessContext<T> x) {
         Class<?> handlerType = paramType();
         Object data = x.getDataContext().getData();
+        ValueField f = this.getClass().getAnnotation(ValueField.class);
 
-        x.store(this, handlerType, deconstruction(data, handlerType), true);
+        x.store(this, handlerType, deconstruction(data, handlerType, f), true);
         return process(null, x);
     }
 
