@@ -6,7 +6,6 @@ package com.bilibili.universal.process.pipeline.impl;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -119,8 +118,7 @@ public class PipelineServiceImpl implements PipelineService {
     }
 
     @SuppressWarnings({ "rawtypes" })
-    private Object execute(final ProcessContext context,
-                           final List<ActionHandler> handlers) throws SystemException {
+    private Object execute(final ProcessContext context, final List<ActionHandler> handlers) {
         // when sync handlers execute first, initial result should be null if empty..
         return execute(context, handlers, null);
     }
@@ -151,22 +149,20 @@ public class PipelineServiceImpl implements PipelineService {
                     handler.cache(handlers, i - 1, previous, context);
                 }
                 return handler.pipeline(context);
-            }, executor)).exceptionally(this::handleEx);
+            }, executor));
         }
 
         return doExecute(f);
     }
 
     @SuppressWarnings("rawtypes")
-    public Object doExecute(CompletableFuture future) {
+    public <T> T doExecute(CompletableFuture<T> future) {
+        // its no need to catch ex, let biz system catch this exception
         try {
             return future.get();
-        } catch (InterruptedException | ExecutionException e) {
-            LoggerUtil.error(logger, e, e);
         } catch (Exception e) {
-            LoggerUtil.error(logger, e, e);
+            throw new SystemException(SystemCode.PIPELINE_EXE_ERROR, e);
         }
-        return null;
     }
 
     private Object handleEx(Throwable e) {
@@ -188,6 +184,10 @@ public class PipelineServiceImpl implements PipelineService {
 
     private <R> R tx(final Function<TransactionStatus, R> function) {
         return transactionTemplate.execute(function::apply);
+    }
+
+    private <T> T sync(Supplier<T> callable) {
+        return doExecute(CompletableFuture.supplyAsync(callable, executor));
     }
 
     private <T> void async(Supplier<T> callable, Executor executor) {

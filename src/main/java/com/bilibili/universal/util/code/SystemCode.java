@@ -53,6 +53,8 @@ public enum SystemCode implements BaseEnum, SystemResultCode {
     BIZ_HANDLER_EXECUTE_ERROR("10010",
                             "业务处理器执行出错"),
 
+    PIPELINE_EXE_ERROR("10011", "流程执行出错"),
+
     ;
 
     /** 错误码 */
