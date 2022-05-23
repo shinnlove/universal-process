@@ -20,6 +20,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.bilibili.universal.process.consts.XmlParseConstant;
@@ -90,7 +92,17 @@ public class DatabaseConfig implements EnvironmentAware {
 
     @Bean(name = "transactionTemplate")
     public TransactionTemplate transactionTemplate(@Qualifier("transactionManager") DataSourceTransactionManager dataSourceTransactionManager) {
-        return new TransactionTemplate(dataSourceTransactionManager);
+        TransactionTemplate tx = new TransactionTemplate(dataSourceTransactionManager);
+        // sql默认10s超时
+        tx.setTimeout(10);
+        return tx;
+    }
+
+    @Bean(name = "newTransactionTemplate")
+    public TransactionTemplate newTransactionTemplate(@Qualifier("transactionManager") DataSourceTransactionManager dataSourceTransactionManager) {
+        TransactionTemplate ntx = new TransactionTemplate(dataSourceTransactionManager);
+        ntx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        return ntx;
     }
 
     @Override
