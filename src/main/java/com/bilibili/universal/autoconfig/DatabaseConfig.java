@@ -43,8 +43,8 @@ public class DatabaseConfig implements EnvironmentAware {
 
     private Environment         environment;
 
-    //    @Bean("primaryDataSource")
-    //    @ConditionalOnMissingBean(name = "primaryDataSource")
+    //    @Bean("masDataSource")
+    //    @ConditionalOnMissingBean(name = "masDataSource")
     //    public DataSource dataSource() throws Exception {
     //        HikariConfig hikariConfig = new HikariConfig();
     //        hikariConfig.setPoolName("HikariCP Connection Pool");
@@ -60,7 +60,7 @@ public class DatabaseConfig implements EnvironmentAware {
 
     @Bean("sqlSessionFactory")
     @ConditionalOnMissingBean(name = "sqlSessionFactory")
-    public SqlSessionFactory sqlSessionFactory(@Qualifier("primaryDataSource") DataSource dataSource) throws Exception {
+    public SqlSessionFactory sqlSessionFactory(@Qualifier("masDataSource") DataSource dataSource) throws Exception {
         SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
         bean.setDataSource(dataSource);
         try {
@@ -86,7 +86,7 @@ public class DatabaseConfig implements EnvironmentAware {
 
     @Bean(name = "transactionManager")
     @ConditionalOnMissingBean(name = "transactionManager")
-    public DataSourceTransactionManager transactionManager(@Qualifier("primaryDataSource") DataSource dataSource) {
+    public DataSourceTransactionManager transactionManager(@Qualifier("masDataSource") DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
     }
 
