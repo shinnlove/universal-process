@@ -27,12 +27,12 @@
     <distributionManagement>
         <repository>
             <id>bili-nexus-release-server</id>
-            <url>http://nexus.bilibili.co/content/groups/public/</url>
+            <url>https://nexus.bilibili.co/content/groups/public/</url>
         </repository>
 
         <snapshotRepository>
             <id>bili-nexus-snapshots-server</id>
-            <url>http://nexus.bilibili.co/content/repositories/snapshots/</url>
+            <url>https://nexus.bilibili.co/content/repositories/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 

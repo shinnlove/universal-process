@@ -63,6 +63,9 @@ public class DatabaseConfig implements EnvironmentAware {
     public SqlSessionFactory sqlSessionFactory(@Qualifier("masDataSource") DataSource dataSource) throws Exception {
         SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
         bean.setDataSource(dataSource);
+
+        logger.warn("universal framework: registering sqlSessionFactory...");
+
         try {
             ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             Resource[] resources = resolver.getResources(XmlParseConstant.MAPPER);
@@ -81,12 +84,18 @@ public class DatabaseConfig implements EnvironmentAware {
     @Bean("sqlSessionTemplate")
     @ConditionalOnMissingBean(name = "sqlSessionTemplate")
     public SqlSessionTemplate sqlSessionTemplate(@Qualifier("sqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
+
+        logger.warn("universal framework: registering sqlSessionTemplate...");
+
         return new SqlSessionTemplate(sqlSessionFactory);
     }
 
     @Bean(name = "transactionManager")
     @ConditionalOnMissingBean(name = "transactionManager")
     public DataSourceTransactionManager transactionManager(@Qualifier("masDataSource") DataSource dataSource) {
+
+        logger.warn("universal framework: registering transaction manager...");
+
         return new DataSourceTransactionManager(dataSource);
     }
 
