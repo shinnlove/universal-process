@@ -64,7 +64,7 @@ public class DatabaseConfig implements EnvironmentAware {
         SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
         bean.setDataSource(dataSource);
 
-        logger.warn("universal framework: registering sqlSessionFactory...");
+        LoggerUtil.warn(logger,"universal framework: registering sqlSessionFactory start...");
 
         try {
             ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -74,6 +74,9 @@ public class DatabaseConfig implements EnvironmentAware {
             System.arraycopy(resources, 0, combination, 0, resources.length);
 
             bean.setMapperLocations(combination);
+
+            LoggerUtil.warn(logger,"universal framework: registering sqlSessionFactory finished...");
+
             return bean.getObject();
         } catch (Exception e) {
             LoggerUtil.error(logger, e, "set mapper location error,", e.getMessage());
@@ -85,7 +88,7 @@ public class DatabaseConfig implements EnvironmentAware {
     @ConditionalOnMissingBean(name = "sqlSessionTemplate")
     public SqlSessionTemplate sqlSessionTemplate(@Qualifier("sqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
 
-        logger.warn("universal framework: registering sqlSessionTemplate...");
+        LoggerUtil.warn(logger, "universal framework: registering sqlSessionTemplate...");
 
         return new SqlSessionTemplate(sqlSessionFactory);
     }
@@ -104,6 +107,9 @@ public class DatabaseConfig implements EnvironmentAware {
         TransactionTemplate tx = new TransactionTemplate(dataSourceTransactionManager);
         // sql默认10s超时
         tx.setTimeout(10);
+
+        logger.warn("universal framework: registering transactionTemplate...");
+
         return tx;
     }
 
@@ -111,6 +117,9 @@ public class DatabaseConfig implements EnvironmentAware {
     public TransactionTemplate newTransactionTemplate(@Qualifier("transactionManager") DataSourceTransactionManager dataSourceTransactionManager) {
         TransactionTemplate ntx = new TransactionTemplate(dataSourceTransactionManager);
         ntx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+        logger.warn("universal framework: registering newTransactionTemplate...");
+
         return ntx;
     }
 
