@@ -25,4 +25,20 @@ public interface StatusMachineSmartService {
     ProcessContext continuousDeduceProceed(long refUniqueNo, DataContext dataContext,
                                            Consumer<ProcessContext> callback);
 
+    /**
+     * jump proceed process, from one source to next.
+     *
+     * @param refUniqueNo
+     * @param source
+     * @param destination
+     * @param dataContext
+     * @return
+     */
+    ProcessContext jumpProceedProcess(final Long refUniqueNo, final int source,
+                                      final int destination, final DataContext dataContext);
+
+    ProcessContext jumpProceedProcess(final Long refUniqueNo, final int source,
+                                      final int destination, final DataContext dataContext,
+                                      final Consumer<ProcessContext> callback);
+
 }

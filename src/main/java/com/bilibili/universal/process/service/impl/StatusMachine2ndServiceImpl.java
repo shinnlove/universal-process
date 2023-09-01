@@ -401,4 +401,30 @@ public class StatusMachine2ndServiceImpl extends AbstractStatusMachineSmartStrat
         return proceedProcess(aid, refNo, dataContext, callback);
     }
 
+    @Override
+    public ProcessContext jumpProceedProcess(Long refUniqueNo, int source, int destination,
+                                             DataContext dataContext) {
+        return jumpProceedProcess(refUniqueNo, source, destination, dataContext, resp -> {
+        });
+    }
+
+    @Override
+    public ProcessContext jumpProceedProcess(Long refUniqueNo, int source, int destination,
+                                             DataContext dataContext,
+                                             Consumer<ProcessContext> callback) {
+        UniversalProcess p = getProcessByRefNo(refUniqueNo);
+        int tid = p.getTemplateId();
+
+        ActionCache ac = getAction(tid, source, destination);
+        int aid = ac.getActionId();
+
+        if (aid <= 0) {
+            // missing appropriate action id here
+            return reject(tid, refUniqueNo, dataContext);
+        }
+
+        // execute after deduce
+        return proceedProcess(aid, refUniqueNo, dataContext, callback);
+    }
+
 }

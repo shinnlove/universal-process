@@ -151,6 +151,10 @@ public abstract class AbstractStatusMachineService implements StatusMachine2ndSe
         return universalProcessCoreService.getProcessListByParentRefUniqueNo(parentRefUniqueNo);
     }
 
+    protected UniversalProcess getProcessByRefNo(long refUniqueNo) {
+        return universalProcessCoreService.getProcessByRefUniqueNo(refUniqueNo, false);
+    }
+
     protected StatusRefMapping statusRefMapping(int parentTemplateId, int childTemplateId) {
         return processMetadataService.getRefStatusMapping(parentTemplateId, childTemplateId);
     }
